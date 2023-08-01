@@ -1,0 +1,293 @@
+= Repositories with Redis OM Spring
+
+Redis OM Spring provides Spring Data repository support for Redis documents. This allows defining repository interfaces with query methods.
+
+== Find by ID
+
+Find a document by ID using `findById`:
+
+[source,java]
+----
+Optional<Company> company = companyRepository.findById("doc-123");
+----
+
+== Find All
+
+Find all documents of an entity type:
+
+[source,java]
+----
+List<Company> companies = companyRepository.findAll();
+----
+
+== Find By Property
+
+Find by a property value using method name conventions:
+
+[source,java]
+----
+List<Company> companies = companyRepository.findByName("Acme");
+----
+
+== Find By Multiple Properties
+
+Combine multiple criteria using `And`/`Or`:
+
+[source,java]
+----
+companies = companyRepository.findByYearFoundedAndName(2000, "Acme");
+
+companies = companyRepository.findByYearFoundedOrName(2000, "Acme");
+----
+
+== Find By Nested Property
+
+Query on nested object properties using underscore notation:
+
+[source,java]
+----
+companies = companyRepository.findByEmployees_Name("John");
+----
+
+== Find First/Top
+
+Get first or top N results:
+
+[source,java]
+----
+Optional<Company> company = companyRepository.findFirstByName("Acme");
+
+Page<Company> top10 = companyRepository.findTop10ByName("Acme");
+----
+
+== Find By Set/List Properties
+
+Query for set/list properties containing given values:
+
+[source,java]
+----
+companies = companyRepository.findByTagsContaining("tech");
+
+companies = companyRepository.findByTagsContainingAll("tech", "cloud");
+----
+
+== Geospatial Search
+
+Geo-search using points and distances:
+
+[source,java]
+----
+companies = companyRepository.findByLocationNear(point, distance);
+----
+
+== Order By
+
+Get results ordered by a property:
+
+[source,java]
+----
+companies = companyRepository.findByIndustryOrderByNameAsc("tech");
+----
+
+These cover the core repository capabilities provided by Redis OM Spring. Refer to the docs for additional details.
+
+== PART 2: Spring Data Redis Repositories with Redis OM Spring
+
+Sample Company data:
+
+[source,java]
+----
+Company google = new Company("Google", 1996, "tech");
+Company microsoft = new Company("Microsoft", 1975, "tech");
+Company apple = new Company("Apple", 1976, "tech");
+----
+
+== Find by ID
+
+Repository method:
+
+[source,java]
+----
+Optional<Company> findById(String id);
+----
+
+The `findById` method generates a lookup by Redis document ID.
+
+Usage:
+
+[source,java]
+----
+Optional<Company> company = companyRepository.findById("doc123");
+----
+
+Expected: Returns Google company
+
+== Find All
+
+Repository method:
+
+[source,java]
+----
+List<Company> findAll();
+----
+
+The `findAll` method fetches all documents for the Company entity.
+
+Usage:
+
+[source,java]
+----
+List<Company> companies = companyRepository.findAll();
+----
+
+Expected: Returns Google, Microsoft, Apple
+
+== Find By Property
+
+Repository method:
+
+[source,java]
+----
+List<Company> findByName(String name);
+----
+
+Find by property is generated from the method name.
+
+Usage:
+
+[source,java]
+----
+List<Company> companies = companyRepository.findByName("Microsoft");
+----
+
+Expected: Returns Microsoft
+
+== Find By Multiple Properties
+
+Repository method:
+
+[source,java]
+----
+List<Company> findByYearFoundedAndName(int year, String name);
+----
+
+The `And` combines multiple criteria.
+
+Usage:
+
+[source,java]
+----
+companies = companyRepository.findByYearFoundedAndName(1975, "Microsoft");
+----
+
+Expected: Returns Microsoft
+
+== Find By Nested Property
+
+Repository method:
+
+[source,java]
+----
+List<Company> findByEmployees_Name(String name);
+----
+
+The `_` notation queries nested properties.
+
+Usage:
+
+[source,java]
+----
+companies = companyRepository.findByEmployees_Name("John");
+----
+
+Expected: Returns companies where any employee is named "John"
+
+== Find First/Top
+
+Repository method:
+
+[source,java]
+----
+Optional<Company> findFirstByName(String name);
+
+Page<Company> findTop10ByName(String name);
+----
+
+`findFirst` and `findTop` get first or top N results.
+
+Usage:
+
+[source,java]
+----
+Optional<Company> company = companyRepository.findFirstByName("Microsoft");
+
+Page<Company> top10 = companyRepository.findTop10ByName("tech");
+----
+
+Expected: Find first Microsoft, top 10 tech companies
+
+== Find By Set/List Properties
+
+Repository method:
+
+[source,java]
+----
+List<Company> findByTagsContaining(String tag);
+
+List<Company> findByTagsContainingAll(String... tags);
+----
+
+Match set/list properties containing given value(s).
+
+Usage:
+
+[source,java]
+----
+companies = companyRepository.findByTagsContaining("cloud");
+
+companies = companyRepository.findByTagsContainingAll("cloud", "ai");
+----
+
+Expected: Companies with tag "cloud", companies with tags "cloud" AND "ai"
+
+== Geospatial Search
+
+Repository method:
+
+[source,java]
+----
+List<Company> findByLocationNear(Point point, Distance distance);
+----
+
+Geo-search using points and distances.
+
+Usage:
+
+[source,java]
+----
+companies = companyRepository.findByLocationNear(new Point(lat, lon), 10);
+----
+
+Expected: Companies within 10 km of lat/lon
+
+== Order By
+
+Repository method:
+
+[source,java]
+----
+List<Company> findByIndustryOrderByNameAsc(String industry);
+----
+
+Get results ordered by a property.
+
+Usage:
+
+[source,java]
+----
+companies = companyRepository.findByIndustryOrderByNameAsc("tech");
+----
+
+Expected: Tech companies ordered by name (A-Z)
+
+This covers the core repository methods provided by Redis OM Spring. Refer to the docs for additional details.

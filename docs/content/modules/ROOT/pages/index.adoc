@@ -1,0 +1,11 @@
+= Redis OM Spring
+
+Brian Sam-Bodden
+
+:doctype: book
+
+[[abstract]]
+Spring Session provides an API and implementations for managing a user's session information.
+
+[[introduction]]
+THis is something else, isn't it?

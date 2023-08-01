@@ -1,0 +1,94 @@
+= Complex Document Search
+
+This covers more advanced search capabilities with Redis OM Spring.
+
+== Full Text Search
+
+Full text search queries across multiple fields:
+
+[source,java]
+----
+String query = "house with garage";
+
+List<Permit> results = permitRepository.search(query);
+----
+
+Words are tokenized automatically, no need to escape spaces.
+
+Can search on nested fields like:
+
+[source,java]
+----
+permitRepository.search("San Francisco"); <1>
+----
+<1> Will match `address.city`
+
+== Explicit Escaping
+
+Escape special characters if needed:
+
+[source,java]
+----
+String q = "house\\ with\\ garage";
+----
+
+Use quotes for exact phrase matching:
+
+[source,java]
+----
+String q = "\"luxury house\"";
+----
+
+== Prefix Search
+
+Prefix searches with wildcard:
+
+[source,java]
+----
+String q = "construct*";
+----
+
+Matches any terms starting with "construct".
+
+== Sorting
+
+Sort search results:
+
+[source,java]
+----
+PageRequest pageRequest = PageRequest.of(0, 10)
+    .withSort(Sort.by(Direction.DESC, "date"));
+
+Page<Permit> results = permitRepository.search(query, pageRequest);
+----
+
+Sort options:
+
+* `ASC` - Ascending
+* `DESC` - Descending
+
+Can sort by numeric, string, and date fields.
+
+== Pagination
+
+Paginate results using Spring Data `Pageable`:
+
+[source,java]
+----
+Page<Permit> page = permitRepository.search(query, pageRequest);
+----
+
+Provides page number, total pages, results etc.
+
+== Field Filtering
+
+Additional filters on fields:
+
+[source,java]
+----
+List<Permit> permits = repository.findByCityAndMaxValueGreaterThan("London", 10000);
+----
+
+Supports all the standard query methods.
+
+This covers some of the advanced search options with Redis OM Spring.

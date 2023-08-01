@@ -69,8 +69,8 @@ This **preview** release provides all of SDRs capabilities plus:
 
 * `@Document` annotation to map Spring Data models to Redis JSON documents
 * Enhances SDRs `@RedisHash` via `@EnableRedisEnhancedRepositories` to:
-  - uses Redis' native search engine (RediSearch) for secondary indexing
-  - uses [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
+  - use Redis' native search engine (RediSearch) for secondary indexing
+  - use [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
 * `RedisDocumentRepository` with automatic implementation of Repository interfaces for complex querying capabilities using `@EnableRedisDocumentRepositories`
 * Declarative Search Indices via `@Indexed`
 * Full-text Search Indices via `@Searchable`

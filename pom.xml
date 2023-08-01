@@ -28,5 +28,7 @@
     <module>demos/roms-hashes</module>
     <module>demos/roms-permits</module>
     <module>demos/roms-vss</module>
+    <!-- Docs Site -->
+    <module>docs</module>
   </modules>
 </project>
