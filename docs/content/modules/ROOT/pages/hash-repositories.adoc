@@ -1,4 +1,4 @@
-[[redis.repositories]]
+[[hash.repositories]]
 = Redis Repositories
 
 Working with Redis Repositories lets you seamlessly convert and store domain objects in Redis Hashes, apply custom mapping strategies, and use secondary indexes.

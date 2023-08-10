@@ -1,293 +1,182 @@
+[[redis.repositories]]
 = Repositories with Redis OM Spring
 
-Redis OM Spring provides Spring Data repository support for Redis documents. This allows defining repository interfaces with query methods.
+The purpose of the Spring Data repositories is to provide a data-access bridge expressed in the language of
+mapped entities. We can think of repositories as a higher-level of abstraction than DAOs (Data Access Objects).
 
-== Find by ID
+In Spring, different Spring Data libraries provide different levels of capabilities in their repositories,
+based on the capabilities of the underlying data store. In Spring Data Redis, the framework that Redis OM
+Spring builds upon the repositories are based on the https://docs.spring.io/spring-data/keyvalue/docs/current/api/org/springframework/data/keyvalue/repository/KeyValueRepository.html[`KeyValueRepository`].
 
-Find a document by ID using `findById`:
+To support simple property searches, Spring Data Redis uses redis data structures to create secondary indices. This is
+no longer necessary when using Redis OM Spring which relies on Redis Stack search engine to create proper search indices.
 
-[source,java]
+Redis OM Spring supports two different types of repositories:
+
+* **Hash Repositories**: "Enhanced" Hash Repositories via `RedisEnhancedRepository` extends `KeyValueRepository` to back all search-related
+repository operations with RediSearch queries and aggregations.
+
+* **Document Repositories**: Document ("JSON") Repositories via `RedisDocumentRepository` extends  `KeyValueRepository` to back all search-related
+repository operations with RediSearch queries and aggregations.
+
+== Setup
+
+The repository infrastructure can be enabled using the Redis Stack specific annotations `@EnableRedisEnhancedRepositories`
+and `@EnableRedisDocumentRepositories` a JavaConfig class.
+
+For example, to enable "enhanced" Redis Hash Repositories use:
+
+====
+[source, java]
 ----
-Optional<Company> company = companyRepository.findById("doc-123");
-----
+@Configuration
+@EnableEnhancedRedisRepositories("com.acme.repositories")
+class ApplicationConfiguration {
 
-== Find All
-
-Find all documents of an entity type:
-
-[source,java]
-----
-List<Company> companies = companyRepository.findAll();
-----
-
-== Find By Property
-
-Find by a property value using method name conventions:
-
-[source,java]
-----
-List<Company> companies = companyRepository.findByName("Acme");
-----
-
-== Find By Multiple Properties
-
-Combine multiple criteria using `And`/`Or`:
-
-[source,java]
-----
-companies = companyRepository.findByYearFoundedAndName(2000, "Acme");
-
-companies = companyRepository.findByYearFoundedOrName(2000, "Acme");
-----
-
-== Find By Nested Property
-
-Query on nested object properties using underscore notation:
-
-[source,java]
-----
-companies = companyRepository.findByEmployees_Name("John");
+  @Bean
+  public EntityManagerFactory entityManagerFactory() {
+    // …
+  }
+}
 ----
 
-== Find First/Top
+A typical place to put the `@EnableRedisEnhancedRepositories` or `@EnableRedisDocumentRepository` is on your
+`@SpringBootApplication` annotated main class:
 
-Get first or top N results:
-
-[source,java]
+====
+[source, java]
 ----
-Optional<Company> company = companyRepository.findFirstByName("Acme");
+@SpringBootApplication
+@EnableRedisDocumentRepositories
+public class RomsDocumentsApplication {
 
-Page<Company> top10 = companyRepository.findTop10ByName("Acme");
-----
+  @Autowired
+  CompanyRepository companyRepo;
 
-== Find By Set/List Properties
-
-Query for set/list properties containing given values:
-
-[source,java]
-----
-companies = companyRepository.findByTagsContaining("tech");
-
-companies = companyRepository.findByTagsContainingAll("tech", "cloud");
+  // …
+}
 ----
 
-== Geospatial Search
+== Built-in Repository Methods
 
-Geo-search using points and distances:
+Both `RedisEnhancedRepository` and `RedisDocumentRepository` extend `KeyValueRepository` which is a combination of `ListCrudRepository` and `ListPagingAndSortingRepository`. The interface `ListCrudRepository` extends the foundational
+`CrudRepository` and `ListPagingAndSortingRepository` extends `PagingAndSortingRepository` as well, this hierarchy is shown in the following diagram:
 
-[source,java]
-----
-companies = companyRepository.findByLocationNear(point, distance);
-----
+image::RedisDocumentRepository.png[]
 
-== Order By
+=== OM Repositories Common Methods
 
-Get results ordered by a property:
+The following table lists the common methods implemented by `RedisEnhancedRepository` and `RedisDocumentRepository`, these methods deal mostly with entities IDs, retrieving/projecting individual fields, and TTLs (Time-to-live):
 
-[source,java]
-----
-companies = companyRepository.findByIndustryOrderByNameAsc("tech");
-----
+|===
+|Method |Description
 
-These cover the core repository capabilities provided by Redis OM Spring. Refer to the docs for additional details.
+|Iterable<ID> getIds()
+|Returns an Iterable containing all the IDs in the collection
 
-== PART 2: Spring Data Redis Repositories with Redis OM Spring
+|Page<ID> getIds(Pageable pageable)
+|Returns a paged collection of IDs
 
-Sample Company data:
+|<F> Iterable<F> getFieldsByIds(Iterable<ID> ids, MetamodelField<T, F> field)
+|Returns an iterable of field values for a given field for the provided IDs
 
-[source,java]
-----
-Company google = new Company("Google", 1996, "tech");
-Company microsoft = new Company("Microsoft", 1975, "tech");
-Company apple = new Company("Apple", 1976, "tech");
-----
+|Long getExpiration(ID id)
+|Returns the remaining time to live of a ID that has a timeout. This introspection capability allows a Redis client to check how many seconds a given key will continue to be part of the dataset. Returns -2 if the key does not exist, -1 if the key exists but has no associated expire.
 
-== Find by ID
+|<S extends T> S update(S entity)
+|Updates/upserts the given entity
 
-Repository method:
+|===
 
-[source,java]
-----
-Optional<Company> findById(String id);
-----
+=== CrudRepository
 
-The `findById` method generates a lookup by Redis document ID.
+The CrudRepository provides sophisticated CRUD functionality for the entity class that is being managed.
+The following table lists the methods implemented from https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/CrudRepository.html[CrudRepository] which exposes generic CRUD operations on a repository for a specific type:
 
-Usage:
+|===
+|Method |Description
 
-[source,java]
-----
-Optional<Company> company = companyRepository.findById("doc123");
-----
+|long count()
+|Returns the number of entities available.
 
-Expected: Returns Google company
+|void delete(T entity)
+|Deletes a given entity.
 
-== Find All
+|void deleteAll()
+|Deletes all entities managed by the repository.
 
-Repository method:
+|void deleteAll(Iterable<? extends T> entities)
+|Deletes the given entities.
 
-[source,java]
-----
-List<Company> findAll();
-----
+|void deleteAllById(Iterable<? extends ID> ids)
+|Deletes all instances of the type T with the given IDs.
 
-The `findAll` method fetches all documents for the Company entity.
+|void deleteById(ID id)
+|Deletes the entity with the given id.
 
-Usage:
+|boolean existsById(ID id)
+|Returns whether an entity with the given id exists.
 
-[source,java]
-----
-List<Company> companies = companyRepository.findAll();
-----
+|Iterable<T> findAll()
+|Returns all instances of the type.
 
-Expected: Returns Google, Microsoft, Apple
+|Iterable<T> findAllById(Iterable<ID> ids)
+|Returns all instances of the type T with the given IDs.
 
-== Find By Property
+|Optional<T> findById(ID id)
+|Retrieves an entity by its id.
 
-Repository method:
+|<S extends T> S save(S entity)
+|Saves a given entity.
 
-[source,java]
-----
-List<Company> findByName(String name);
-----
+|<S extends T> Iterable<S> saveAll(Iterable<S> entities)
+|Saves all given entities.
+|===
 
-Find by property is generated from the method name.
+=== ListCrudRepository
 
-Usage:
+The following table lists the methods implemented from https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/ListCrudRepository.html[ListCrudRepository] which adds finder versions returning `List` rather than `Iterable`:
 
-[source,java]
-----
-List<Company> companies = companyRepository.findByName("Microsoft");
-----
+|===
+|Method |Description
 
-Expected: Returns Microsoft
+|List<T> findAll()
+|Returns all instances of the type.
 
-== Find By Multiple Properties
+|List<T> findAllById(Iterable<ID> ids)
+|Returns all instances of the type T with the given IDs.
 
-Repository method:
+|<S extends T> List<S> saveAll(Iterable<S> entities)
+|Saves all given entities.
+|===
 
-[source,java]
-----
-List<Company> findByYearFoundedAndName(int year, String name);
-----
+=== PagingSortingRepository
 
-The `And` combines multiple criteria.
+On top of the CrudRepository there is a https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html[`PagingAndSortingRepository`] abstraction that adds additional methods to ease paginated access to entities. The following table lists the methods implemented from https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html[PagingSortingRepository] which exposes methods to retrieve entities using the pagination and sorting abstraction:
 
-Usage:
+|===
+|Method |Description
 
-[source,java]
-----
-companies = companyRepository.findByYearFoundedAndName(1975, "Microsoft");
-----
+|Page<T> findAll(Pageable pageable)
+|Returns a Page of entities meeting the paging restriction provided in the Pageable object.
 
-Expected: Returns Microsoft
+|Iterable<T> findAll(Sort sort)
+|Returns all entities sorted by the given options.
+|===
 
-== Find By Nested Property
+=== ListPagingAndSortingRepository
 
-Repository method:
+The following table lists the methods implemented from https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/ListPagingAndSortingRepository.html[ListPagingAndSortingRepository] which adds finder versions returning `List` rather than `Iterable`:
 
-[source,java]
-----
-List<Company> findByEmployees_Name(String name);
-----
+|===
+|Method |Description
 
-The `_` notation queries nested properties.
+|List<T> findAll(Sort sort)
+|Returns all entities sorted by the given options.
+|===
 
-Usage:
+== Query Methods
 
-[source,java]
-----
-companies = companyRepository.findByEmployees_Name("John");
-----
+Standard CRUD functionality repositories usually have queries on the underlying datastore. With Spring Data, declaring those queries becomes a four-step process:
 
-Expected: Returns companies where any employee is named "John"
 
-== Find First/Top
-
-Repository method:
-
-[source,java]
-----
-Optional<Company> findFirstByName(String name);
-
-Page<Company> findTop10ByName(String name);
-----
-
-`findFirst` and `findTop` get first or top N results.
-
-Usage:
-
-[source,java]
-----
-Optional<Company> company = companyRepository.findFirstByName("Microsoft");
-
-Page<Company> top10 = companyRepository.findTop10ByName("tech");
-----
-
-Expected: Find first Microsoft, top 10 tech companies
-
-== Find By Set/List Properties
-
-Repository method:
-
-[source,java]
-----
-List<Company> findByTagsContaining(String tag);
-
-List<Company> findByTagsContainingAll(String... tags);
-----
-
-Match set/list properties containing given value(s).
-
-Usage:
-
-[source,java]
-----
-companies = companyRepository.findByTagsContaining("cloud");
-
-companies = companyRepository.findByTagsContainingAll("cloud", "ai");
-----
-
-Expected: Companies with tag "cloud", companies with tags "cloud" AND "ai"
-
-== Geospatial Search
-
-Repository method:
-
-[source,java]
-----
-List<Company> findByLocationNear(Point point, Distance distance);
-----
-
-Geo-search using points and distances.
-
-Usage:
-
-[source,java]
-----
-companies = companyRepository.findByLocationNear(new Point(lat, lon), 10);
-----
-
-Expected: Companies within 10 km of lat/lon
-
-== Order By
-
-Repository method:
-
-[source,java]
-----
-List<Company> findByIndustryOrderByNameAsc(String industry);
-----
-
-Get results ordered by a property.
-
-Usage:
-
-[source,java]
-----
-companies = companyRepository.findByIndustryOrderByNameAsc("tech");
-----
-
-Expected: Tech companies ordered by name (A-Z)
-
-This covers the core repository methods provided by Redis OM Spring. Refer to the docs for additional details.
