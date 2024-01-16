@@ -1,6 +1,6 @@
 package com.redis.om.spring;
 
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.testcontainers.RedisStackContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,7 +19,7 @@ import static com.redis.testcontainers.RedisStackContainer.DEFAULT_IMAGE_NAME;
 @DirtiesContext
 public abstract class AbstractBaseOMTest {
   @Container
-  static final RedisStackContainer REDIS;
+  protected static final RedisStackContainer REDIS;
 
   static {
     REDIS = new RedisStackContainer(DEFAULT_IMAGE_NAME.withTag(RedisStackContainer.DEFAULT_TAG)).withReuse(true);
@@ -30,7 +30,7 @@ public abstract class AbstractBaseOMTest {
   protected StringRedisTemplate template;
 
   @Autowired
-  protected RedisModulesOperations<String> modulesOperations;
+  protected ROMSOperations<String, ?> modulesOperations;
 
   @Autowired
   @Qualifier("redisCustomKeyValueTemplate")
@@ -53,8 +53,7 @@ public abstract class AbstractBaseOMTest {
   protected Comparator<Double> closeToComparator = new Comparator<Double>() {
     @Override
     public int compare(Double o1, Double o2) {
-      return Math.abs(o1.doubleValue() - o2.doubleValue()) < 0.001 ? 0 : -1;
+      return Math.abs(o1 - o2) < 0.001 ? 0 : -1;
     }
   };
-
 }

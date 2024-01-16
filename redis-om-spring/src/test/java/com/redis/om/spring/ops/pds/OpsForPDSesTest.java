@@ -1,7 +1,7 @@
 package com.redis.om.spring.ops.pds;
 
 import com.redis.om.spring.AbstractBaseDocumentTest;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SuppressWarnings("SpellCheckingInspection") class OpsForPDSesTest extends AbstractBaseDocumentTest {
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
   
   @Test
   void testBasicBloomOperations() {
@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
   
   @Test
   void testCuckooKOperations() {
-    CuckooFilterOperations<String> cuckoo = modulesOperations.opsForCuckoFilter();
+    CuckooFilterOperations<String> cuckoo = modulesOperations.opsForCuckooFilter();
     
     assertNotNull(cuckoo);
   }

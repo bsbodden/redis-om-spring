@@ -10,7 +10,7 @@ import com.redis.om.spring.audit.EntityAuditor;
 import com.redis.om.spring.convert.MappingRedisOMConverter;
 import com.redis.om.spring.id.ULIDIdentifierGenerator;
 import com.redis.om.spring.metamodel.MetamodelField;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.repository.RedisDocumentRepository;
@@ -71,7 +71,7 @@ public class SimpleRedisDocumentRepository<T, ID> extends SimpleKeyValueReposito
     implements RedisDocumentRepository<T, ID> {
 
   private final GsonBuilder gsonBuilder;
-  protected final RedisModulesOperations<String> modulesOperations;
+  protected final ROMSOperations<String, ?> modulesOperations;
   protected final EntityInformation<T, ID> metadata;
   protected final KeyValueOperations operations;
   protected final RediSearchIndexer indexer;
@@ -87,26 +87,26 @@ public class SimpleRedisDocumentRepository<T, ID> extends SimpleKeyValueReposito
   public SimpleRedisDocumentRepository( //
       EntityInformation<T, ID> metadata, //
       KeyValueOperations operations, //
-      @Qualifier("redisModulesOperations") RedisModulesOperations<?> rmo, //
+      @Qualifier("romsOperations") ROMSOperations<?, ?> rmo, //
       RediSearchIndexer indexer, //
       RedisMappingContext mappingContext,
       GsonBuilder gsonBuilder,
       FeatureExtractor featureExtractor, //
       RedisOMProperties properties) {
     super(metadata, operations);
-    this.modulesOperations = (RedisModulesOperations<String>) rmo;
+    this.modulesOperations = (ROMSOperations<String, ?>) rmo;
     this.metadata = metadata;
     this.operations = operations;
     this.indexer = indexer;
     this.mappingConverter = new MappingRedisOMConverter(null,
-        new ReferenceResolverImpl(modulesOperations.template()));
+        new ReferenceResolverImpl(modulesOperations));
     this.generator = ULIDIdentifierGenerator.INSTANCE;
     this.gsonBuilder = gsonBuilder;
     this.mappingContext = mappingContext;
-    this.auditor = new EntityAuditor(modulesOperations.template());
+    this.auditor = new EntityAuditor(modulesOperations);
     this.featureExtractor = featureExtractor;
     this.properties = properties;
-    this.entityStream = new EntityStreamImpl(modulesOperations, modulesOperations.gsonBuilder(), indexer);
+    this.entityStream = new EntityStreamImpl(modulesOperations, modulesOperations.getGsonBuilder(), indexer);
   }
 
   @Override
@@ -157,7 +157,7 @@ public class SimpleRedisDocumentRepository<T, ID> extends SimpleKeyValueReposito
 
   @Override
   public Long getExpiration(ID id) {
-    RedisTemplate<String, String> template = modulesOperations.template();
+    RedisTemplate<String, String> template = (RedisTemplate<String, String>) modulesOperations.getTemplate();
     return template.getExpire(getKey(id));
   }
 
@@ -166,7 +166,7 @@ public class SimpleRedisDocumentRepository<T, ID> extends SimpleKeyValueReposito
     Assert.notNull(entities, "The given Iterable of entities must not be null!");
     List<S> saved = new ArrayList<>();
 
-    try (Jedis jedis = modulesOperations.client().getJedis().get()) {
+    try (Jedis jedis = modulesOperations.getModulesClient().getJedis().get()) {
       Pipeline pipeline = jedis.pipelined();
       Gson gson = gsonBuilder.create();
       for (S entity : entities) {
@@ -341,7 +341,7 @@ public class SimpleRedisDocumentRepository<T, ID> extends SimpleKeyValueReposito
   }
 
   private Number getEntityVersion(String key, String versionProperty) {
-    JSONOperations<String> ops = modulesOperations.opsForJSON();
+    JSONOperations<String,?> ops = modulesOperations.opsForJSON();
     Class<?> type = new TypeToken<Long[]>() {}.getRawType();
     Long[] dbVersionArray = (Long[]) ops.get(key, type, Path2.of("$." + versionProperty));
     return dbVersionArray != null ? dbVersionArray[0] : null;

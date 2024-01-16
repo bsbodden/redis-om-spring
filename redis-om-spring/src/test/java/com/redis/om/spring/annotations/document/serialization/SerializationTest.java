@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.redis.om.spring.AbstractBaseDocumentTest;
 import com.redis.om.spring.annotations.document.fixtures.KitchenSink;
 import com.redis.om.spring.annotations.document.fixtures.KitchenSinkRepository;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
   KitchenSinkRepository repository;
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   private KitchenSink ks;
   private KitchenSink ks1;
@@ -102,7 +102,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
   @Test
   void testJSONSerialization() {
-    JSONOperations<String> ops = modulesOperations.opsForJSON();
+    JSONOperations<String,?> ops = modulesOperations.opsForJSON();
 
     // LocalDate
     Instant localDateInstant = localDate.atStartOfDay(ZoneId.systemDefault()).toInstant();

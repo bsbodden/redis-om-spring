@@ -5,7 +5,7 @@ import com.redis.om.spring.AbstractBaseDocumentTest;
 import com.redis.om.spring.annotations.document.fixtures.Airport;
 import com.redis.om.spring.annotations.document.fixtures.AirportsRepository;
 import com.redis.om.spring.autocomplete.Suggestion;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.repository.query.autocomplete.AutoCompleteOptions;
 import org.assertj.core.util.DoubleComparator;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ class AutoCompleteTest extends AbstractBaseDocumentTest {
   AirportsRepository repository;
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   @BeforeEach
   void loadAirports(@Value("classpath:/data/airport_codes.csv") File dataFile) throws IOException {

@@ -3,7 +3,7 @@ package com.redis.om.spring.repository.query;
 import com.redis.om.spring.RedisOMProperties;
 import com.redis.om.spring.annotations.*;
 import com.redis.om.spring.convert.MappingRedisOMConverter;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.repository.query.autocomplete.AutoCompleteQueryExecutor;
 import com.redis.om.spring.repository.query.bloom.BloomQueryExecutor;
@@ -18,7 +18,6 @@ import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.geo.Point;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
 import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.convert.ReferenceResolverImpl;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameter;
@@ -82,7 +81,7 @@ public class RedisEnhancedQuery implements RepositoryQuery {
   private final List<String> paramNames = new ArrayList<>();
   private final Class<?> domainType;
 
-  private final RedisModulesOperations<String> modulesOperations;
+  private final ROMSOperations<String, ?> modulesOperations;
   private final MappingRedisOMConverter mappingConverter;
 
   private final BloomQueryExecutor bloomQueryExecutor;
@@ -97,19 +96,18 @@ public class RedisEnhancedQuery implements RepositoryQuery {
       RepositoryMetadata metadata, //
       QueryMethodEvaluationContextProvider evaluationContextProvider, //
       KeyValueOperations keyValueOperations, //
-      RedisOperations<?, ?> redisOperations, //
-      RedisModulesOperations<?> rmo, //
+      ROMSOperations<?, ?> rmo, //
       Class<? extends AbstractQueryCreator<?, ?>> queryCreator,
       RedisOMProperties redisOMProperties) {
     logger.info(String.format("Creating query %s", queryMethod.getName()));
 
-    this.modulesOperations = (RedisModulesOperations<String>) rmo;
+    this.modulesOperations = (ROMSOperations<String, ?>) rmo;
     this.queryMethod = queryMethod;
     this.searchIndex = this.queryMethod.getEntityInformation().getJavaType().getName() + "Idx";
     this.domainType = this.queryMethod.getEntityInformation().getJavaType();
     this.redisOMProperties = redisOMProperties;
 
-    this.mappingConverter = new MappingRedisOMConverter(null, new ReferenceResolverImpl(redisOperations));
+    this.mappingConverter = new MappingRedisOMConverter(null, new ReferenceResolverImpl(rmo.getTemplate()));
 
     bloomQueryExecutor = new BloomQueryExecutor(this, modulesOperations);
     cuckooQueryExecutor = new CuckooQueryExecutor(this, modulesOperations);

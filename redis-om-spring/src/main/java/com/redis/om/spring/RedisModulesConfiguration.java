@@ -20,7 +20,8 @@ import com.redis.om.spring.annotations.Bloom;
 import com.redis.om.spring.annotations.Cuckoo;
 import com.redis.om.spring.annotations.Document;
 import com.redis.om.spring.client.RedisModulesClient;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
+import com.redis.om.spring.ops.ROMSOperationsImpl;
 import com.redis.om.spring.ops.json.JSONOperations;
 import com.redis.om.spring.ops.pds.BloomOperations;
 import com.redis.om.spring.ops.pds.CuckooFilterOperations;
@@ -48,9 +49,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisHash;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.mapping.RedisMappingContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.lang.Nullable;
@@ -109,30 +108,30 @@ public class RedisModulesConfiguration {
     return new RedisModulesClient(jedisConnectionFactory, builder);
   }
 
-  @Bean(name = "redisModulesOperations")
+  @Bean(name = "romsOperations")
   @Primary
   @ConditionalOnMissingBean
   @Lazy
-  RedisModulesOperations<?> redisModulesOperations( //
+  ROMSOperations<?,?> romsOperations( //
           RedisModulesClient rmc, //
-          StringRedisTemplate template, //
+          RedisTemplate<?,?> template, //
           @Qualifier("omGsonBuilder") GsonBuilder gsonBuilder) {
-    return new RedisModulesOperations<>(rmc, template, gsonBuilder);
+    return new ROMSOperationsImpl<>(rmc, template, gsonBuilder);
   }
 
   @Bean(name = "redisJSONOperations")
-  JSONOperations<?> redisJSONOperations(RedisModulesOperations<?> redisModulesOperations) {
+  JSONOperations<?,?> redisJSONOperations(ROMSOperations<?,?> redisModulesOperations) {
     return redisModulesOperations.opsForJSON();
   }
 
   @Bean(name = "redisBloomOperations")
-  BloomOperations<?> redisBloomOperations(RedisModulesOperations<?> redisModulesOperations) {
+  BloomOperations<?> redisBloomOperations(ROMSOperations<?,?> redisModulesOperations) {
     return redisModulesOperations.opsForBloom();
   }
 
   @Bean(name = "redisCuckooOperations")
-  CuckooFilterOperations<?> redisCuckooFilterOperations(RedisModulesOperations<?> redisModulesOperations) {
-    return redisModulesOperations.opsForCuckoFilter();
+  CuckooFilterOperations<?> redisCuckooFilterOperations(ROMSOperations<?,?> redisModulesOperations) {
+    return redisModulesOperations.opsForCuckooFilter();
   }
 
   @Bean(name = "redisOmTemplate")
@@ -290,21 +289,19 @@ public class RedisModulesConfiguration {
 
   @Bean(name = "redisJSONKeyValueAdapter")
   RedisJSONKeyValueAdapter getRedisJSONKeyValueAdapter( //
-      RedisOperations<?, ?> redisOps, //
-      RedisModulesOperations<?> redisModulesOperations, //
+      ROMSOperations<?,?> redisModulesOperations, //
       RedisMappingContext mappingContext, //
       RediSearchIndexer indexer, //
       @Qualifier("omGsonBuilder") GsonBuilder gsonBuilder, //
       RedisOMProperties properties, //
       @Nullable @Qualifier("featureExtractor") FeatureExtractor featureExtractor
   ) {
-    return new RedisJSONKeyValueAdapter(redisOps, redisModulesOperations, mappingContext, indexer, gsonBuilder, featureExtractor, properties);
+    return new RedisJSONKeyValueAdapter(redisModulesOperations, mappingContext, indexer, gsonBuilder, featureExtractor, properties);
   }
 
   @Bean(name = "redisJSONKeyValueTemplate")
   public CustomRedisKeyValueTemplate getRedisJSONKeyValueTemplate( //
-      RedisOperations<?, ?> redisOps, //
-      RedisModulesOperations<?> redisModulesOperations, //
+      ROMSOperations<?,?> redisModulesOperations, //
       RedisMappingContext mappingContext, //
       RediSearchIndexer indexer, //
       @Qualifier("omGsonBuilder") GsonBuilder gsonBuilder, //
@@ -312,27 +309,26 @@ public class RedisModulesConfiguration {
       @Nullable @Qualifier("featureExtractor") FeatureExtractor featureExtractor
   ) {
     return new CustomRedisKeyValueTemplate(
-        new RedisJSONKeyValueAdapter(redisOps, redisModulesOperations, mappingContext, indexer, gsonBuilder, featureExtractor, properties),
+        new RedisJSONKeyValueAdapter(redisModulesOperations, mappingContext, indexer, gsonBuilder, featureExtractor, properties),
         mappingContext);
   }
 
   @Bean(name = "redisCustomKeyValueTemplate")
   public CustomRedisKeyValueTemplate getKeyValueTemplate( //
-      RedisOperations<?, ?> redisOps, //
-      RedisModulesOperations<?> redisModulesOperations, //
+      ROMSOperations<?,?> redisModulesOperations, //
       RedisMappingContext mappingContext, //
       RediSearchIndexer indexer, //
       RedisOMProperties properties, //
       @Nullable @Qualifier("featureExtractor") FeatureExtractor featureExtractor
   ) {
     return new CustomRedisKeyValueTemplate(
-        new RedisEnhancedKeyValueAdapter(redisOps, redisModulesOperations, mappingContext, indexer, featureExtractor, properties), //
+        new RedisEnhancedKeyValueAdapter(redisModulesOperations, mappingContext, indexer, featureExtractor, properties), //
         mappingContext);
   }
 
   @Bean(name = "streamingQueryBuilder")
   EntityStream streamingQueryBuilder(
-      RedisModulesOperations<?> redisModulesOperations,
+      ROMSOperations<?,?> redisModulesOperations,
       @Qualifier("omGsonBuilder") GsonBuilder gsonBuilder,
       RediSearchIndexer indexer
   ) {
@@ -353,8 +349,7 @@ public class RedisModulesConfiguration {
   @EventListener(ContextRefreshedEvent.class)
   public void processBloom(ContextRefreshedEvent cre) {
     ApplicationContext ac = cre.getApplicationContext();
-    @SuppressWarnings("unchecked")
-    RedisModulesOperations<String> rmo = (RedisModulesOperations<String>) ac.getBean("redisModulesOperations");
+    @SuppressWarnings("unchecked") ROMSOperations<String,?> rmo = (ROMSOperations<String,?>) ac.getBean("romsOperations");
 
     Set<BeanDefinition> beanDefs = getBeanDefinitionsFor(ac, Document.class, RedisHash.class);
 
@@ -379,8 +374,7 @@ public class RedisModulesConfiguration {
   @EventListener(ContextRefreshedEvent.class)
   public void processCuckoo(ContextRefreshedEvent cre) {
     ApplicationContext ac = cre.getApplicationContext();
-    @SuppressWarnings("unchecked")
-    RedisModulesOperations<String> rmo = (RedisModulesOperations<String>) ac.getBean("redisModulesOperations");
+    @SuppressWarnings("unchecked") ROMSOperations<String,?> rmo = (ROMSOperations<String,?>) ac.getBean("romsOperations");
 
     Set<BeanDefinition> beanDefs = getBeanDefinitionsFor(ac, Document.class, RedisHash.class);
 
@@ -390,7 +384,7 @@ public class RedisModulesConfiguration {
         for (java.lang.reflect.Field field : getDeclaredFieldsTransitively(cl)) {
           if (field.isAnnotationPresent(Cuckoo.class)) {
             Cuckoo cuckoo = field.getAnnotation(Cuckoo.class);
-            CuckooFilterOperations<String> ops = rmo.opsForCuckoFilter();
+            CuckooFilterOperations<String> ops = rmo.opsForCuckooFilter();
             String filterName = !ObjectUtils.isEmpty(cuckoo.name()) ? cuckoo.name()
                 : String.format("cf:%s:%s", cl.getSimpleName(), field.getName());
             CFReserveParams params = CFReserveParams.reserveParams()

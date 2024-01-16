@@ -1,7 +1,7 @@
 package com.redis.om.spring.repository.query.bloom;
 
 import com.redis.om.spring.annotations.Bloom;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.pds.BloomOperations;
 import com.redis.om.spring.util.ObjectUtils;
 import org.apache.commons.logging.Log;
@@ -18,9 +18,9 @@ public class BloomQueryExecutor {
   private static final Log logger = LogFactory.getLog(BloomQueryExecutor.class);
   public static final String EXISTS_BY_PREFIX = "existsBy";
   final RepositoryQuery query;
-  final RedisModulesOperations<String> modulesOperations;
+  final ROMSOperations<String, ?> modulesOperations;
   
-  public BloomQueryExecutor(RepositoryQuery query, RedisModulesOperations<String> modulesOperations) {
+  public BloomQueryExecutor(RepositoryQuery query, ROMSOperations<String, ?> modulesOperations) {
     this.query = query;
     this.modulesOperations = modulesOperations;
   }

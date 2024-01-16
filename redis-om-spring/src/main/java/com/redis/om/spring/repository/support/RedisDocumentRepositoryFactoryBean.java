@@ -3,7 +3,7 @@ package com.redis.om.spring.repository.support;
 import com.google.gson.GsonBuilder;
 import com.redis.om.spring.RediSearchIndexer;
 import com.redis.om.spring.RedisOMProperties;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.vectorize.FeatureExtractor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.keyvalue.core.KeyValueOperations;
@@ -19,7 +19,7 @@ public class RedisDocumentRepositoryFactoryBean<T extends Repository<S, ID>, S, 
     extends KeyValueRepositoryFactoryBean<T, S, ID> {
 
   @Autowired
-  private @Nullable RedisModulesOperations<String> rmo;
+  private @Nullable ROMSOperations<String,?> rmo;
   @Autowired
   private @Nullable RediSearchIndexer indexer;
   @Autowired
@@ -54,7 +54,7 @@ public class RedisDocumentRepositoryFactoryBean<T extends Repository<S, ID>, S, 
 
   @Override
   public void afterPropertiesSet() {
-    Assert.notNull(rmo, "RedisModulesOperations must not be null!");
+    Assert.notNull(rmo, "ROMSOperations must not be null!");
 
     super.afterPropertiesSet();
   }

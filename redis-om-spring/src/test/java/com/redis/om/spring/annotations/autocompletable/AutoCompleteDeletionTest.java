@@ -3,7 +3,7 @@ package com.redis.om.spring.annotations.autocompletable;
 import com.redis.om.spring.AbstractBaseDocumentTest;
 import com.redis.om.spring.annotations.document.fixtures.Airport;
 import com.redis.om.spring.annotations.document.fixtures.AirportsRepository;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class AutoCompleteDeletionTest extends AbstractBaseDocumentTest {
   AirportsRepository repository;
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   @BeforeEach
   void loadAirports() {

@@ -1,7 +1,7 @@
 package com.redis.om.spring.annotations.document.fixtures;
 
 import com.google.gson.Gson;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import org.springframework.beans.factory.annotation.Autowired;
 import redis.clients.jedis.search.Document;
@@ -15,7 +15,7 @@ import java.util.Optional;
 public class MyDocQueriesImpl implements MyDocQueries {
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   @Autowired
   Gson gson;

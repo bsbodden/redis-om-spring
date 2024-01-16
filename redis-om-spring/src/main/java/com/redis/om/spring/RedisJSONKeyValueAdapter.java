@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.redis.om.spring.audit.EntityAuditor;
 import com.redis.om.spring.convert.RedisOMCustomConversions;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.util.ObjectUtils;
@@ -18,7 +18,6 @@ import org.springframework.data.annotation.Reference;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisKeyValueAdapter;
-import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.data.redis.core.convert.KeyspaceConfiguration;
 import org.springframework.data.redis.core.convert.RedisCustomConversions;
@@ -45,10 +44,9 @@ import static com.redis.om.spring.util.ObjectUtils.isPrimitiveOfType;
 
 public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
   private static final Log logger = LogFactory.getLog(RedisJSONKeyValueAdapter.class);
-  private final JSONOperations<?> redisJSONOperations;
-  private final RedisOperations<?, ?> redisOperations;
+  private final JSONOperations<?,?> redisJSONOperations;
   private final RedisMappingContext mappingContext;
-  private final RedisModulesOperations<String> modulesOperations;
+  private final ROMSOperations<String,?> modulesOperations;
   private final RediSearchIndexer indexer;
   private final GsonBuilder gsonBuilder;
   private final EntityAuditor auditor;
@@ -59,28 +57,25 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
    * Creates new {@link RedisKeyValueAdapter} with default
    * {@link RedisCustomConversions}.
    *
-   * @param redisOps            must not be {@literal null}.
    * @param rmo                 must not be {@literal null}.
    * @param mappingContext      must not be {@literal null}.
    * @param keyspaceToIndexMap  must not be {@literal null}.
    */
   @SuppressWarnings("unchecked")
   public RedisJSONKeyValueAdapter( //
-    RedisOperations<?, ?> redisOps, //
-    RedisModulesOperations<?> rmo, //
+    ROMSOperations<?,?> rmo, //
     RedisMappingContext mappingContext, //
     RediSearchIndexer keyspaceToIndexMap, //
     GsonBuilder gsonBuilder, //
     FeatureExtractor featureExtractor, //
     RedisOMProperties redisOMProperties
   ) {
-    super(redisOps, mappingContext, new RedisOMCustomConversions());
-    this.modulesOperations = (RedisModulesOperations<String>) rmo;
+    super(rmo.getTemplate(), mappingContext, new RedisOMCustomConversions());
+    this.modulesOperations = (ROMSOperations<String,?>) rmo;
     this.redisJSONOperations = modulesOperations.opsForJSON();
-    this.redisOperations = redisOps;
     this.mappingContext = mappingContext;
     this.indexer = keyspaceToIndexMap;
-    this.auditor = new EntityAuditor(this.redisOperations);
+    this.auditor = new EntityAuditor(this.modulesOperations);
     this.gsonBuilder = gsonBuilder;
     this.featureExtractor = featureExtractor;
     this.redisOMProperties = redisOMProperties;
@@ -97,7 +92,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
   public Object put(Object id, Object item, String keyspace) {
     logger.debug(String.format("%s, %s, %s", id, item, keyspace));
     @SuppressWarnings("unchecked")
-    JSONOperations<String> ops = (JSONOperations<String>) redisJSONOperations;
+    JSONOperations<String,Object> ops = (JSONOperations<String,Object>) redisJSONOperations;
 
     String key = getKey(keyspace, id);
 
@@ -109,7 +104,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
     ops.set(key, item);
     processReferences(key, item);
 
-    redisOperations.execute((RedisCallback<Object>) connection -> {
+    modulesOperations.execute((RedisCallback<Object>) connection -> {
 
       maybeTtl.ifPresent(aLong -> connection.keyCommands().expire(toBytes(key), aLong));
 
@@ -135,7 +130,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
   @Nullable
   public <T> T get(String key, Class<T> type) {
     @SuppressWarnings("unchecked")
-    JSONOperations<String> ops = (JSONOperations<String>) redisJSONOperations;
+    JSONOperations<String,Object> ops = (JSONOperations<String,Object>) redisJSONOperations;
     return ops.get(key, type);
   }
 
@@ -203,7 +198,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
   @Override
   public <T> T delete(Object id, String keyspace, Class<T> type) {
     @SuppressWarnings("unchecked")
-    JSONOperations<String> ops = (JSONOperations<String>) redisJSONOperations;
+    JSONOperations<String,Object> ops = (JSONOperations<String,Object>) redisJSONOperations;
     T entity = get(id, keyspace, type);
     if (entity != null) {
       ops.del(getKey(keyspace, id), Path2.ROOT_PATH);
@@ -262,7 +257,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
    */
   @Override
   public boolean contains(Object id, String keyspace) {
-    Boolean exists = redisOperations
+    Boolean exists = modulesOperations
         .execute((RedisCallback<Boolean>) connection -> connection.keyCommands().exists(toBytes(getKey(keyspace, id))));
 
     return exists != null && exists;
@@ -271,7 +266,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
   private void processReferences(String key, Object item) {
     List<Field> fields = ObjectUtils.getFieldsWithAnnotation(item.getClass(), Reference.class);
     if (!fields.isEmpty()) {
-      JSONOperations<String> ops = (JSONOperations<String>) redisJSONOperations;
+      JSONOperations<String,Object> ops = (JSONOperations<String,Object>) redisJSONOperations;
       PropertyAccessor accessor = PropertyAccessorFactory.forBeanPropertyAccess(item);
       fields.forEach(f -> {
         var referencedValue = accessor.getPropertyValue(f.getName());
@@ -367,7 +362,7 @@ public class RedisJSONKeyValueAdapter extends RedisKeyValueAdapter {
   }
 
   private Number getEntityVersion(String key, String versionProperty) {
-    JSONOperations<String> ops = (JSONOperations<String>) redisJSONOperations;
+    JSONOperations<String,Object> ops = (JSONOperations<String,Object>) redisJSONOperations;
     Class<?> type = new TypeToken<Long[]>() {}.getRawType();
     Long[] dbVersionArray = (Long[]) ops.get(key, type, Path2.of("$." + versionProperty));
     return dbVersionArray != null ? dbVersionArray[0] : null;

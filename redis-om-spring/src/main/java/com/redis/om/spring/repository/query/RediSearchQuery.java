@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.redis.om.spring.RedisOMProperties;
 import com.redis.om.spring.annotations.*;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.repository.query.autocomplete.AutoCompleteQueryExecutor;
 import com.redis.om.spring.repository.query.bloom.BloomQueryExecutor;
@@ -82,7 +82,7 @@ public class RediSearchQuery implements RepositoryQuery {
   private final List<String> paramNames = new ArrayList<>();
   private final Class<?> domainType;
 
-  private final RedisModulesOperations<String> modulesOperations;
+  private final ROMSOperations<String,?> modulesOperations;
 
   private boolean isANDQuery = false;
 
@@ -98,14 +98,14 @@ public class RediSearchQuery implements RepositoryQuery {
       RepositoryMetadata metadata, //
       QueryMethodEvaluationContextProvider evaluationContextProvider, //
       KeyValueOperations keyValueOperations, //
-      RedisModulesOperations<?> rmo, //
+      ROMSOperations<?, ?> rmo, //
       Class<? extends AbstractQueryCreator<?, ?>> queryCreator, //
       GsonBuilder gsonBuilder, //
       RedisOMProperties redisOMProperties //
   ) {
     logger.info(String.format("Creating %s query method", queryMethod.getName()));
 
-    this.modulesOperations = (RedisModulesOperations<String>) rmo;
+    this.modulesOperations = (ROMSOperations<String, ?>) rmo;
     this.queryMethod = queryMethod;
     this.searchIndex = this.queryMethod.getEntityInformation().getJavaType().getName() + "Idx";
     this.domainType = this.queryMethod.getEntityInformation().getJavaType();

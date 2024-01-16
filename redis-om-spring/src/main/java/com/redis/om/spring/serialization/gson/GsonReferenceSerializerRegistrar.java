@@ -21,7 +21,7 @@ import static com.redis.om.spring.util.ObjectUtils.*;
 public class GsonReferenceSerializerRegistrar {
   private static final Log logger = LogFactory.getLog(GsonReferenceSerializerRegistrar.class);
   private final GsonBuilder builder;
-  private JSONOperations<?> ops;
+  private JSONOperations<?,?> ops;
   private final ApplicationContext ac;
   private static final String SKIPPING_REFERENCE_SEARCH = "Skipping @Reference search for %s because %s";
 

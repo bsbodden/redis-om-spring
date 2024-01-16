@@ -1,7 +1,7 @@
 package com.redis.om.spring.ops.pds;
 
 import com.redis.om.spring.AbstractBaseDocumentTest;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OpsForCountMinSketchTest extends AbstractBaseDocumentTest {
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   CountMinSketchOperations<String> cms;
 

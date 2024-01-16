@@ -1,7 +1,7 @@
 package com.redis.om.spring.ops.pds;
 
 import com.redis.om.spring.AbstractBaseDocumentTest;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("SpellCheckingInspection") class OpsForBloomTest extends AbstractBaseDocumentTest {
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   BloomOperations<String> bloom;
 

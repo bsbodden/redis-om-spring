@@ -6,7 +6,7 @@ import com.redis.om.spring.AbstractBaseEnhancedRedisTest;
 import com.redis.om.spring.annotations.document.fixtures.*;
 import com.redis.om.spring.annotations.hash.fixtures.Person;
 import com.redis.om.spring.annotations.hash.fixtures.PersonRepository;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
   DocWithIntegerIdRepository docWithIntRepo;
   
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
   
   @Test
   void testMonotonicallyIncreasingUlidAssignment() {
@@ -64,7 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
   
   @Test
   void testExplicitUlid() {
-    JSONOperations<String> ops = modulesOperations.opsForJSON();
+    JSONOperations<String,Object> ops = (JSONOperations<String, Object>) modulesOperations.opsForJSON();
     
     DocWithExplicitUlidId ulidDoc = new DocWithExplicitUlidId();
     Ulid generatedId = docWithUlidRepo.save(ulidDoc).getId();
@@ -92,7 +92,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
   
   @Test
   void testIntegerId() {
-    JSONOperations<String> ops = modulesOperations.opsForJSON();
+    JSONOperations<String,Object> ops = (JSONOperations<String, Object>) modulesOperations.opsForJSON();
     
     DocWithIntegerId intDoc = new DocWithIntegerId();
     Integer generatedId = docWithIntRepo.save(intDoc).getId();

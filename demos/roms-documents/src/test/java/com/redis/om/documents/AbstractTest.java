@@ -2,7 +2,7 @@ package com.redis.om.documents;
 
 import com.redis.om.spring.CustomRedisKeyValueTemplate;
 import com.redis.om.spring.RediSearchIndexer;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.testcontainers.RedisStackContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,7 +30,7 @@ public abstract class AbstractTest {
     protected StringRedisTemplate template;
 
     @Autowired
-    protected RedisModulesOperations<String> modulesOperations;
+    protected ROMSOperations<String,?> modulesOperations;
 
     @Autowired
     @Qualifier("redisCustomKeyValueTemplate")

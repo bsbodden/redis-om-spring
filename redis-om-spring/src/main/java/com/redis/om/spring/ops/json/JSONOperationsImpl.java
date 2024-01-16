@@ -5,23 +5,33 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 import com.redis.om.spring.client.RedisModulesClient;
 import org.json.JSONArray;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.Nullable;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.json.JsonSetParams;
 import redis.clients.jedis.json.Path2;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
-public class JSONOperationsImpl<K> implements JSONOperations<K> {
+public class JSONOperationsImpl<K,V> implements JSONOperations<K,V> {
 
   private Gson gson;
   private final GsonBuilder builder;
   private final RedisModulesClient client;
 
-  public JSONOperationsImpl(RedisModulesClient client, GsonBuilder builder) {
+  private final RedisTemplate<K,V> template;
+
+  public JSONOperationsImpl(RedisModulesClient client, GsonBuilder builder, RedisTemplate<K,V> template) {
     this.client = client;
     this.builder = builder;
+    this.template = template;
   }
 
   @Override
@@ -96,8 +106,31 @@ public class JSONOperationsImpl<K> implements JSONOperations<K> {
   }
 
   @Override
-  public void set(K key, Object object) {
-    client.clientForJSON().jsonSet(key.toString(), Path2.ROOT_PATH, getGson().toJson(object));
+  public void set(K key, V value) {
+    //client.clientForJSON().jsonSet(key.toString(), Path2.ROOT_PATH, getGson().toJson(value));
+
+    execute((RedisCallback<V>) connection -> {
+      var nativeConnection = connection.getNativeConnection();
+      if (nativeConnection instanceof Jedis jedis) {
+        UnifiedJedis uj = new UnifiedJedis(jedis.getConnection());
+        uj.jsonSet(key.toString(), Path2.ROOT_PATH, getGson().toJson(value));
+      }
+      return null;
+    });
+  }
+
+  @Nullable
+  <T> T execute(RedisCallback<T> callback) {
+    return template.execute(callback, true);
+  }
+
+  public Optional<Jedis> getJedis(RedisConnection connection) {
+    Object nativeConnection = connection.getNativeConnection();
+    if (nativeConnection instanceof Jedis jedis) {
+      return Optional.of(jedis);
+    } else {
+      return Optional.empty();
+    }
   }
 
   @Override
@@ -227,5 +260,9 @@ public class JSONOperationsImpl<K> implements JSONOperations<K> {
       gson = builder.create();
     }
     return gson;
+  }
+
+  public RedisTemplate<K,V> getTemplate() {
+    return template;
   }
 }

@@ -1,7 +1,7 @@
 package com.redis.om.spring.repository;
 
 import com.redis.om.spring.AbstractBaseDocumentTest;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ class InheritingDocumentTest extends AbstractBaseDocumentTest {
     private final SearchOperations<?> searchOperations;
 
     @Autowired
-    InheritingDocumentTest(InheritingDocumentRepository inheritingDocumentRepository, RedisModulesOperations<String> redisModulesOperations) {
+    InheritingDocumentTest(InheritingDocumentRepository inheritingDocumentRepository, ROMSOperations<String, ?> redisModulesOperations) {
         this.inheritingDocumentRepository = inheritingDocumentRepository;
         this.searchOperations = redisModulesOperations.opsForSearch(InheritingDocument.class.getName() + "Idx");
     }

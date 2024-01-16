@@ -20,10 +20,10 @@ public class ReferenceDeserializer implements JsonDeserializer<Object> {
   private final Class<?> type;
   private final ObjectConstructor<?> objectConstructor;
 
-  private final JSONOperations<String> ops;
+  private final JSONOperations<String,?> ops;
 
-  public ReferenceDeserializer(Field field, JSONOperations<?> ops) {
-    this.ops = (JSONOperations<String>) ops;
+  public ReferenceDeserializer(Field field, JSONOperations<?,?> ops) {
+    this.ops = (JSONOperations<String,?>) ops;
     Map<Type, InstanceCreator<?>> instanceCreators = new HashMap<>();
     ConstructorConstructor constructorConstructor = new ConstructorConstructor(instanceCreators, true,
         Collections.emptyList());

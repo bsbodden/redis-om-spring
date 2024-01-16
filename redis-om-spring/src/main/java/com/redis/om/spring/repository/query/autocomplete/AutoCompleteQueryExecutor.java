@@ -2,7 +2,7 @@ package com.redis.om.spring.repository.query.autocomplete;
 
 import com.redis.om.spring.annotations.AutoComplete;
 import com.redis.om.spring.autocomplete.Suggestion;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.util.ObjectUtils;
 import org.apache.commons.logging.Log;
@@ -21,9 +21,9 @@ public class AutoCompleteQueryExecutor {
   public static final String AUTOCOMPLETE_PREFIX = "autoComplete";
   
   final RepositoryQuery query;
-  final RedisModulesOperations<String> modulesOperations;
+  final ROMSOperations<String, ?> modulesOperations;
 
-  public AutoCompleteQueryExecutor(RepositoryQuery query, RedisModulesOperations<String> modulesOperations) {
+  public AutoCompleteQueryExecutor(RepositoryQuery query, ROMSOperations<String, ?> modulesOperations) {
     this.query = query;
     this.modulesOperations = modulesOperations;
   }

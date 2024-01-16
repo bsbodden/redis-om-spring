@@ -1,7 +1,7 @@
 package com.redis.om.spring.repository.query.cuckoo;
 
 import com.redis.om.spring.annotations.Cuckoo;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.pds.CuckooFilterOperations;
 import com.redis.om.spring.util.ObjectUtils;
 import org.apache.commons.logging.Log;
@@ -18,9 +18,9 @@ public class CuckooQueryExecutor {
   private static final Log logger = LogFactory.getLog(CuckooQueryExecutor.class);
   public static final String EXISTS_BY_PREFIX = "existsBy";
   final RepositoryQuery query;
-  final RedisModulesOperations<String> modulesOperations;
+  final ROMSOperations<String, ?> modulesOperations;
 
-  public CuckooQueryExecutor(RepositoryQuery query, RedisModulesOperations<String> modulesOperations) {
+  public CuckooQueryExecutor(RepositoryQuery query, ROMSOperations<String, ?> modulesOperations) {
     this.query = query;
     this.modulesOperations = modulesOperations;
   }
@@ -52,7 +52,7 @@ public class CuckooQueryExecutor {
   
   public Object executeCuckooQuery(Object[] parameters, String cuckooFilter) {
     logger.debug(String.format("filter:%s, params:%s", cuckooFilter, Arrays.toString(parameters)));
-    CuckooFilterOperations<String> ops = modulesOperations.opsForCuckoFilter();
+    CuckooFilterOperations<String> ops = modulesOperations.opsForCuckooFilter();
     return ops.exists(cuckooFilter, parameters[0].toString());
   }
 }

@@ -3,7 +3,7 @@ package com.redis.om.spring.autocomplete;
 import com.google.gson.Gson;
 import com.redis.om.spring.annotations.AutoComplete;
 import com.redis.om.spring.annotations.AutoCompletePayload;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
@@ -37,9 +37,9 @@ public class AutoCompleteAspect implements Ordered {
 
   @Autowired StringRedisTemplate template;
 
-  private final RedisModulesOperations<String> rmo;
+  private final ROMSOperations<String, ?> rmo;
 
-  public AutoCompleteAspect(RedisModulesOperations<String> rmo) {
+  public AutoCompleteAspect(ROMSOperations<String, ?> rmo) {
     this.rmo = rmo;
   }
 

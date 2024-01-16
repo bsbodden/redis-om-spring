@@ -1,7 +1,7 @@
 package com.redis.om.spring.annotations.hash.fixtures;
 
 import com.redis.om.spring.convert.MappingRedisOMConverter;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.util.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import java.util.Optional;
 @SuppressWarnings({ "unused", "SpringJavaAutowiredMembersInspection" }) public class MyHashQueriesImpl implements MyHashQueries {
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   private final MappingRedisOMConverter converter = new MappingRedisOMConverter();
 

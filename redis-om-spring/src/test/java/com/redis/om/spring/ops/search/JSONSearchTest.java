@@ -1,7 +1,7 @@
 package com.redis.om.spring.ops.search;
 
 import com.redis.om.spring.AbstractBaseDocumentTest;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
   }
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   @Autowired
   private StringRedisTemplate template;
@@ -66,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
     ops.createIndex(sc, IndexOptions.defaultOptions().setDefinition(def));
 
     if (Boolean.FALSE.equals(template.hasKey("doc1"))) {
-      JSONOperations<String> json = modulesOperations.opsForJSON();
+      JSONOperations<String,Object> json = (JSONOperations<String, Object>) modulesOperations.opsForJSON();
       json.set("doc1", new SomeJSON());
     }
   }

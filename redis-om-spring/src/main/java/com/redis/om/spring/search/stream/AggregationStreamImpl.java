@@ -5,7 +5,7 @@ import com.redis.om.spring.annotations.Document;
 import com.redis.om.spring.annotations.ReducerFunction;
 import com.redis.om.spring.convert.MappingRedisOMConverter;
 import com.redis.om.spring.metamodel.MetamodelField;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.tuple.Tuples;
 import com.redis.om.spring.util.ObjectUtils;
@@ -115,7 +115,7 @@ public class AggregationStreamImpl<E, T> implements AggregationStream<T> {
   }
 
   @SafeVarargs
-  public AggregationStreamImpl(String searchIndex, RedisModulesOperations<String> modulesOperations, Gson gson, Class<E> entityClass, String query,
+  public AggregationStreamImpl(String searchIndex, ROMSOperations<String, ?> modulesOperations, Gson gson, Class<E> entityClass, String query,
       MetamodelField<E, ?>... fields) {
     this.entityClass = entityClass;
     search = modulesOperations.opsForSearch(searchIndex);
@@ -123,7 +123,7 @@ public class AggregationStreamImpl<E, T> implements AggregationStream<T> {
     isDocument = entityClass.isAnnotationPresent(Document.class);
     this.gson = gson;
     this.mappingConverter = new MappingRedisOMConverter(null,
-        new ReferenceResolverImpl(modulesOperations.template()));
+        new ReferenceResolverImpl(modulesOperations.getTemplate()));
     createAggregationGroup(fields);
   }
 

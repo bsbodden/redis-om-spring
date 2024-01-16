@@ -5,7 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.redis.om.spring.autocomplete.Suggestion;
 import com.redis.om.spring.client.RedisModulesClient;
 import com.redis.om.spring.repository.query.autocomplete.AutoCompleteOptions;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import redis.clients.jedis.resps.Tuple;
 import redis.clients.jedis.search.*;
 import redis.clients.jedis.search.aggr.AggregationBuilder;
@@ -22,9 +22,9 @@ public class SearchOperationsImpl<K> implements SearchOperations<K> {
   private final RediSearchCommands search;
   private final RedisModulesClient modulesClient;
   private final K index;
-  private final StringRedisTemplate template;
+  private final RedisTemplate template;
 
-  public SearchOperationsImpl(K index, RedisModulesClient modulesClient, StringRedisTemplate template) {
+  public SearchOperationsImpl(K index, RedisModulesClient modulesClient, RedisTemplate<K,?> template) {
     this.index = index;
     this.modulesClient = modulesClient;
     this.search = modulesClient.clientForSearch();

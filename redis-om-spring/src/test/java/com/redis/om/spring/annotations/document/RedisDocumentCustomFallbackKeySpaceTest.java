@@ -6,7 +6,7 @@ import com.redis.om.spring.TestConfig;
 import com.redis.om.spring.annotations.EnableRedisDocumentRepositories;
 import com.redis.om.spring.annotations.document.fixtures.MyDoc;
 import com.redis.om.spring.annotations.document.fixtures.MyDocRepository;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import org.junit.jupiter.api.AfterEach;
@@ -60,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.*;
   RedisTemplate<String, String> template;
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   String myDoc1Id;
 
@@ -101,7 +101,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
   @Test
   void testModuleOperations() {
-    JSONOperations<String> ops = modulesOperations.opsForJSON();
+    JSONOperations<String,?> ops = modulesOperations.opsForJSON();
     JsonObject rawJSON = ops.get("CUSTOM_KEYSPACE:MyDoc:" + myDoc1Id, JsonObject.class);
 
     assertNotNull(rawJSON);

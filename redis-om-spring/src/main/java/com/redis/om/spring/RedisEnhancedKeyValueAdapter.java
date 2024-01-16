@@ -3,15 +3,18 @@ package com.redis.om.spring;
 import com.redis.om.spring.audit.EntityAuditor;
 import com.redis.om.spring.convert.MappingRedisOMConverter;
 import com.redis.om.spring.convert.RedisOMCustomConversions;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.vectorize.FeatureExtractor;
 import org.springframework.data.convert.CustomConversions;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.core.PartialUpdate;
 import org.springframework.data.redis.core.PartialUpdate.PropertyUpdate;
 import org.springframework.data.redis.core.PartialUpdate.UpdateCommand;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisKeyValueAdapter;
+import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.data.redis.core.convert.RedisConverter;
 import org.springframework.data.redis.core.convert.RedisCustomConversions;
 import org.springframework.data.redis.core.convert.RedisData;
@@ -33,10 +36,8 @@ import java.util.concurrent.TimeUnit;
 import static com.redis.om.spring.util.ObjectUtils.*;
 
 public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
-
-  private final RedisOperations<?, ?> redisOperations;
   private final RedisConverter converter;
-  private final RedisModulesOperations<String> modulesOperations;
+  private final ROMSOperations<String,?> modulesOperations;
   private final RediSearchIndexer indexer;
   private final EntityAuditor auditor;
   private final FeatureExtractor featureExtractor;
@@ -46,44 +47,39 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
    * Creates new {@link RedisKeyValueAdapter} with default
    * {@link RedisMappingContext} and default {@link RedisCustomConversions}.
    *
-   * @param redisOps           must not be {@literal null}.
    * @param rmo                must not be {@literal null}.
    * @param indexer must not be {@literal null}.
    */
   public RedisEnhancedKeyValueAdapter( //
-      RedisOperations<?, ?> redisOps, //
-      RedisModulesOperations<?> rmo, //
+      ROMSOperations<?,?> rmo, //
       RediSearchIndexer indexer, //
       FeatureExtractor featureExtractor, //
       RedisOMProperties redisOMProperties
   ) {
-    this(redisOps, rmo, new RedisMappingContext(), indexer, featureExtractor, redisOMProperties);
+    this(rmo, new RedisMappingContext(), indexer, featureExtractor, redisOMProperties);
   }
 
   /**
    * Creates new {@link RedisKeyValueAdapter} with default
    * {@link RedisCustomConversions}.
    *
-   * @param redisOps           must not be {@literal null}.
    * @param rmo                must not be {@literal null}.
    * @param mappingContext     must not be {@literal null}.
    * @param indexer must not be {@literal null}.
    */
   public RedisEnhancedKeyValueAdapter( //
-      RedisOperations<?, ?> redisOps, //
-      RedisModulesOperations<?> rmo, //
+      ROMSOperations<?,?> rmo, //
       RedisMappingContext mappingContext, //
       RediSearchIndexer indexer, //
       FeatureExtractor featureExtractor, //
       RedisOMProperties redisOMProperties
   ) {
-    this(redisOps, rmo, mappingContext, new RedisOMCustomConversions(), indexer, featureExtractor, redisOMProperties);
+    this(rmo, mappingContext, new RedisOMCustomConversions(), indexer, featureExtractor, redisOMProperties);
   }
 
   /**
    * Creates new {@link RedisKeyValueAdapter}.
    *
-   * @param redisOps           must not be {@literal null}.
    * @param rmo                must not be {@literal null}.
    * @param mappingContext     must not be {@literal null}.
    * @param customConversions  can be {@literal null}.
@@ -91,30 +87,27 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
    */
   @SuppressWarnings("unchecked")
   public RedisEnhancedKeyValueAdapter( //
-      RedisOperations<?, ?> redisOps, //
-      RedisModulesOperations<?> rmo, //
+      ROMSOperations<?,?> rmo, //
       RedisMappingContext mappingContext, //
       @Nullable CustomConversions customConversions, //
       RediSearchIndexer indexer, //
       FeatureExtractor featureExtractor, //
       RedisOMProperties redisOMProperties
   ) {
-    super(redisOps, mappingContext, customConversions);
+    super(rmo.getTemplate(), mappingContext, customConversions);
 
-    Assert.notNull(redisOps, "RedisOperations must not be null!");
     Assert.notNull(mappingContext, "RedisMappingContext must not be null!");
 
     MappingRedisOMConverter mappingConverter = new MappingRedisOMConverter(mappingContext,
-        new ReferenceResolverImpl(redisOps));
+        new ReferenceResolverImpl(rmo));
     mappingConverter
         .setCustomConversions(customConversions == null ? new RedisOMCustomConversions() : customConversions);
     mappingConverter.afterPropertiesSet();
 
     this.converter = mappingConverter;
-    this.redisOperations = redisOps;
-    this.modulesOperations = (RedisModulesOperations<String>) rmo;
+    this.modulesOperations = (ROMSOperations<String,?>) rmo;
     this.indexer = indexer;
-    this.auditor = new EntityAuditor(this.redisOperations);
+    this.auditor = new EntityAuditor(this.modulesOperations);
     this.featureExtractor = featureExtractor;
     this.redisOMProperties = redisOMProperties;
   }
@@ -145,9 +138,9 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
     }
 
     byte[] objectKey = createKey(rdo.getKeyspace(), rdo.getId());
-    redisOperations.execute((RedisCallback<Boolean>) connection -> connection.keyCommands().del(objectKey) == 0);
+    this.modulesOperations.execute((RedisCallback<Boolean>) connection -> connection.keyCommands().del(objectKey) == 0);
 
-    redisOperations.executePipelined((RedisCallback<Object>) connection -> {
+    this.modulesOperations.executePipelined((RedisCallback<Object>) connection -> {
       Map<byte[], byte[]> rawMap = rdo.getBucket().rawMap();
       connection.hashCommands().hMSet(objectKey, rawMap);
 
@@ -177,7 +170,7 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
 
     byte[] binId = createKey(stringKeyspace, stringId);
 
-    Map<byte[], byte[]> raw = redisOperations
+    Map<byte[], byte[]> raw = (Map<byte[], byte[]>) this.modulesOperations
         .execute((RedisCallback<Map<byte[], byte[]>>) connection -> connection.hashCommands().hGetAll(binId));
 
     if (CollectionUtils.isEmpty(raw)) {
@@ -206,7 +199,7 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
 
       byte[] keyToDelete = createKey(asStringValue(keyspace), asStringValue(id));
 
-      redisOperations.execute((RedisCallback<Void>) connection -> {
+      modulesOperations.execute((RedisCallback<Void>) connection -> {
         connection.keyCommands().unlink(keyToDelete);
         return null;
       });
@@ -305,7 +298,7 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
     RedisData rdo = new RedisData();
     this.converter.write(update, rdo);
 
-    redisOperations.execute((RedisCallback<Void>) connection -> {
+    modulesOperations.execute((RedisCallback<Void>) connection -> {
 
       RedisUpdateObject redisUpdateObject = new RedisUpdateObject(redisKey);
 
@@ -380,7 +373,7 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
    */
   @Override
   public boolean contains(Object id, String keyspace) {
-    Boolean exists = redisOperations
+    Boolean exists = (Boolean) modulesOperations
         .execute((RedisCallback<Boolean>) connection -> connection.keyCommands().exists(toBytes(getKey(keyspace, id))));
 
     return exists != null && exists;
@@ -445,7 +438,7 @@ public class RedisEnhancedKeyValueAdapter extends RedisKeyValueAdapter {
 
       TimeToLive ttl = ttlProperty.findAnnotation(TimeToLive.class);
 
-      Long timeout = redisOperations.execute((RedisCallback<Long>) connection -> {
+      Long timeout = (Long) modulesOperations.execute((RedisCallback<Long>) connection -> {
 
         if (ObjectUtils.nullSafeEquals(TimeUnit.SECONDS, ttl.unit())) {
           return connection.keyCommands().ttl(key);

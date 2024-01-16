@@ -7,7 +7,7 @@ import com.redis.om.spring.annotations.Document;
 import com.redis.om.spring.convert.MappingRedisOMConverter;
 import com.redis.om.spring.metamodel.MetamodelField;
 import com.redis.om.spring.metamodel.indexed.NumericField;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.json.JSONOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.search.stream.actions.TakesJSONOperations;
@@ -54,9 +54,9 @@ public class SearchStreamImpl<E> implements SearchStream<E> {
   private static final Integer MAX_LIMIT = 10000;
 
   @SuppressWarnings("unused")
-  private final RedisModulesOperations<String> modulesOperations;
+  private final ROMSOperations<String, ?> modulesOperations;
   private final SearchOperations<String> search;
-  private final JSONOperations<String> json;
+  private final JSONOperations<String,?> json;
   private final String searchIndex;
   private final Class<E> entityClass;
   private Node rootNode = QueryBuilders.union();
@@ -84,7 +84,7 @@ public class SearchStreamImpl<E> implements SearchStream<E> {
 
   private final ExampleToNodeConverter<E> exampleToNodeConverter;
 
-  public SearchStreamImpl(Class<E> entityClass, RedisModulesOperations<String> modulesOperations, GsonBuilder gsonBuilder,
+  public SearchStreamImpl(Class<E> entityClass, ROMSOperations<String, ?> modulesOperations, GsonBuilder gsonBuilder,
       RediSearchIndexer indexer) {
     this.modulesOperations = modulesOperations;
     this.entityClass = entityClass;
@@ -100,7 +100,7 @@ public class SearchStreamImpl<E> implements SearchStream<E> {
     }
     this.isDocument = entityClass.isAnnotationPresent(Document.class);
     this.mappingConverter = new MappingRedisOMConverter(null,
-        new ReferenceResolverImpl(modulesOperations.template()));
+        new ReferenceResolverImpl(modulesOperations.getTemplate()));
     this.exampleToNodeConverter = new ExampleToNodeConverter<>(indexer);
   }
 

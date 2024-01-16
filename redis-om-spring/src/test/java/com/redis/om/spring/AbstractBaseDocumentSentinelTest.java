@@ -1,7 +1,7 @@
 package com.redis.om.spring;
 
 import com.redis.om.spring.annotations.EnableRedisDocumentRepositories;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,7 +51,7 @@ public abstract class AbstractBaseDocumentSentinelTest {
   }
 
   @Autowired
-  protected RedisModulesOperations<String> modulesOperations;
+  protected ROMSOperations<String, ?> modulesOperations;
 
   @DynamicPropertySource
   static void properties(DynamicPropertyRegistry registry) {

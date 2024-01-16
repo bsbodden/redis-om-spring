@@ -4,7 +4,7 @@ import com.github.f4b6a3.ulid.Ulid;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.JsonAdapter;
 import com.redis.om.spring.annotations.*;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.ops.search.SearchOperations;
 import com.redis.om.spring.repository.query.QueryUtils;
 import com.redis.om.spring.serialization.gson.EnumTypeAdapter;
@@ -49,7 +49,7 @@ public class RediSearchIndexer {
   private static final Log logger = LogFactory.getLog(RediSearchIndexer.class);
 
   private final ApplicationContext ac;
-  private final RedisModulesOperations<String> rmo;
+  private final ROMSOperations<String,?> rmo;
   private final RedisMappingContext mappingContext;
   private final GsonBuilder gsonBuilder;
 
@@ -58,7 +58,7 @@ public class RediSearchIndexer {
   @SuppressWarnings("unchecked")
   public RediSearchIndexer(ApplicationContext ac, GsonBuilder gsonBuilder) {
     this.ac = ac;
-    rmo = (RedisModulesOperations<String>) ac.getBean("redisModulesOperations");
+    rmo = (ROMSOperations<String,?>) ac.getBean("romsOperations");
     mappingContext = (RedisMappingContext) ac.getBean("keyValueMappingContext");
     this.gsonBuilder = gsonBuilder;
   }

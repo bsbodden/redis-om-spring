@@ -1,12 +1,13 @@
 package com.redis.om.spring.ops.json;
 
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.lang.Nullable;
 import redis.clients.jedis.json.JsonSetParams;
 import redis.clients.jedis.json.Path2;
 
 import java.util.List;
 
-public interface JSONOperations<K> {
+public interface JSONOperations<K,V> {
   Long del(K key, Path2 path);
 
   @Nullable
@@ -27,7 +28,7 @@ public interface JSONOperations<K> {
   @SuppressWarnings("unchecked")
   <T> List<T> mget(Path2 path, Class<T> clazz, K... keys);
 
-  void set(K key, Object object);
+  void set(K key, V value);
 
   void set(K key, Object object, Path2 path);
 
@@ -67,4 +68,6 @@ public interface JSONOperations<K> {
   void toggle(K key, Path2 path);
 
   List<Double> numIncrBy(K key, Path2 path, Long value);
+
+  RedisTemplate<K,V> getTemplate();
 }

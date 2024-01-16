@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public abstract class BaseAbstractAction implements TakesJSONOperations {
   protected final SearchFieldAccessor field;
-  protected JSONOperations<String> json;
+  protected JSONOperations<String,?> json;
   protected Field idField;
 
   protected BaseAbstractAction(SearchFieldAccessor field) {
@@ -25,7 +25,7 @@ public abstract class BaseAbstractAction implements TakesJSONOperations {
   }
 
   @Override
-  public void setJSONOperations(JSONOperations<String> json) {
+  public void setJSONOperations(JSONOperations<String,?> json) {
     this.json = json;
   }
 

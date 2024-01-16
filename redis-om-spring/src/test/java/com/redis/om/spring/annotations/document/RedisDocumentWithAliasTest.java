@@ -5,7 +5,7 @@ import com.redis.om.spring.annotations.document.fixtures.Direccion;
 import com.redis.om.spring.annotations.document.fixtures.WithAlias;
 import com.redis.om.spring.annotations.document.fixtures.WithAlias$;
 import com.redis.om.spring.annotations.document.fixtures.WithAliasRepository;
-import com.redis.om.spring.ops.RedisModulesOperations;
+import com.redis.om.spring.ops.ROMSOperations;
 import com.redis.om.spring.search.stream.EntityStream;
 import com.redis.om.spring.search.stream.SearchStream;
 import org.junit.jupiter.api.AfterEach;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
   WithAliasRepository repository;
 
   @Autowired
-  RedisModulesOperations<String> modulesOperations;
+  ROMSOperations<String, ?> modulesOperations;
 
   private String id1;
 
