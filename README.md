@@ -384,7 +384,7 @@ Iterable<MyDoc> allMatches = repository.findAll(example);
 
 For Maven, things normally just work, when you run `./mvnw spring-boot:run`. Some users have experienced this not being
 the case, in which I recommend to explicitly declaring the `maven-compiler-plugin` in the case below it is paired with
-an app created with [`start.spring.io`](https://start.spring.io/) with Spring Boot `v3.0.4` (all other versions can be
+an app created with [`start.spring.io`](https://start.spring.io/) with Spring Boot `v3.2.0` (all other versions can be
 inherited from the parent poms):
 
 ```xml
@@ -397,7 +397,7 @@ inherited from the parent poms):
       <path>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-configuration-processor</artifactId>
-        <version>3.1.2</version>
+        <version>3.2.0</version>
       </path>
       <path>
         <groupId>org.projectlombok</groupId>
@@ -549,7 +549,7 @@ Redis OM uses the [MIT license][license-url].
 [badge-codeql-page]: https://github.com/redis/redis-om-spring/actions/workflows/codeql-analysis.yml
 [license-image]: https://img.shields.io/github/license/redis/redis-om-spring
 [license-url]: LICENSE
-[sdr-badge-releases]: https://img.shields.io/maven-central/v/org.springframework.data/spring-data-redis/3.1.2
+[sdr-badge-releases]: https://img.shields.io/maven-central/v/org.springframework.data/spring-data-redis/3.2.0
 [discord-shield]: https://img.shields.io/discord/697882427875393627?style=social&logo=discord
 [twitch-shield]: https://img.shields.io/twitch/status/redisinc?style=social
 [twitter-shield]: https://img.shields.io/twitter/follow/redisinc?style=social
@@ -570,7 +570,7 @@ Redis OM uses the [MIT license][license-url].
 [open-issues]: http://isitmaintained.com/project/redis/redis-om-spring
 [issue-resolution]: http://isitmaintained.com/project/redis/redis-om-spring
 [redisearch-json]: https://github.com/redislabs-training/mod-devcap-redisjson-getting-started/blob/master/articles/QuickStart-RediSearchWithJSON.md
-[sdr-link-releases]: https://repo1.maven.org/maven2/org/springframework/data/spring-data-redis/3.0.1/
+[sdr-link-releases]: https://repo1.maven.org/maven2/org/springframework/data/spring-data-redis/3.2.0/
 [discord-url]: http://discord.gg/redis
 [twitch-url]: https://www.twitch.tv/redisinc
 [twitter-url]: https://twitter.com/redisinc
