@@ -104,6 +104,26 @@ public class SearchStreamImpl<E> implements SearchStream<E> {
     this.exampleToNodeConverter = new ExampleToNodeConverter<>(indexer);
   }
 
+  public SearchStreamImpl(Class<E> entityClass, RedisModulesOperations<String> modulesOperations, GsonBuilder gsonBuilder, RediSearchIndexer indexer,
+    String searchIndex) {
+    this.modulesOperations = modulesOperations;
+    this.entityClass = entityClass;
+    this.searchIndex = searchIndex;
+    this.search = modulesOperations.opsForSearch(searchIndex);
+    this.json = modulesOperations.opsForJSON();
+    this.gsonBuilder = gsonBuilder;
+    Optional<Field> maybeIdField = ObjectUtils.getIdFieldForEntityClass(entityClass);
+    if (maybeIdField.isPresent()) {
+      this.idField = maybeIdField.get();
+    } else {
+      throw new IllegalArgumentException(entityClass.getName() + " does not appear to have an ID field");
+    }
+    this.isDocument = entityClass.isAnnotationPresent(Document.class);
+    this.mappingConverter = new MappingRedisOMConverter(null,
+      new ReferenceResolverImpl(modulesOperations.template()));
+    this.exampleToNodeConverter = new ExampleToNodeConverter<>(indexer);
+  }
+
   @Override
   public SearchStream<E> filter(SearchFieldPredicate<? super E, ?> predicate) {
     if (predicate instanceof KNNPredicate) {

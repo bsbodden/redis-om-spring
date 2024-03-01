@@ -23,6 +23,7 @@ import org.springframework.data.redis.core.mapping.RedisPersistentEntity;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.search.FTCreateParams;
 import redis.clients.jedis.search.FieldName;
 import redis.clients.jedis.search.IndexDataType;
@@ -30,10 +31,7 @@ import redis.clients.jedis.search.schemafields.*;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -810,5 +808,72 @@ public class RediSearchIndexer {
   private String getFieldPrefix(String prefix, boolean isDocument) {
     String chain = (prefix == null || prefix.isBlank()) ? "" : prefix + ".";
     return isDocument ? "$." + chain : chain;
+  }
+
+  /**
+   * Create a temporary index for the given class.
+   *   // https://redis.com/blog/the-case-for-ephemeral-search/
+   * @param cl
+   * @param indexName
+   * @param filter
+   * @param timeout
+   */
+  public void createTemporaryIndexFor(Class<?> cl, String indexName, String filter, Duration timeout) {
+    Optional<IndexDataType> maybeType = determineIndexTarget(cl);
+    IndexDataType idxType;
+    if (maybeType.isPresent()) {
+      idxType = maybeType.get();
+    } else {
+      return;
+    }
+    boolean isDocument = idxType == IndexDataType.JSON;
+    Optional<Document> document = isDocument ? Optional.of(cl.getAnnotation(Document.class)) : Optional.empty();
+    Optional<RedisHash> hash = !isDocument ? Optional.of(cl.getAnnotation(RedisHash.class)) : Optional.empty();
+
+    Optional<String> maybeScoreField;
+    try {
+      logger.info(String.format("Found @%s annotated class: %s", idxType, cl.getName()));
+
+      final List<java.lang.reflect.Field> allClassFields = getDeclaredFieldsTransitively(cl);
+
+      List<SchemaField> fields = processIndexedFields(allClassFields, isDocument);
+      maybeScoreField = getDocumentScoreField(allClassFields, isDocument);
+      createIndexedFieldForIdField(cl, fields, isDocument).ifPresent(fields::add);
+
+      SearchOperations<String> opsForSearch = rmo.opsForSearch(indexName);
+
+      FTCreateParams params = createIndexDefinition(cl, idxType);
+      params.temporary(timeout.getSeconds());
+      params.filter(filter);
+
+      Optional<String> maybeEntityPrefix;
+      if (isDocument) {
+        maybeEntityPrefix = document.map(Document::value).filter(ObjectUtils::isNotEmpty);
+        maybeScoreField.ifPresent(params::scoreField);
+      } else {
+        maybeEntityPrefix = hash.map(RedisHash::value).filter(ObjectUtils::isNotEmpty);
+      }
+
+      String entityPrefix = maybeEntityPrefix.orElse(getEntityPrefix(cl));
+      params.prefix(entityPrefix);
+      addKeySpaceMapping(entityPrefix, cl);
+      updateTTLSettings(cl, entityPrefix, isDocument, document, allClassFields);
+      opsForSearch.createIndex(params, fields);
+    } catch (Exception e) {
+      logger.warn(String.format(SKIPPING_INDEX_CREATION, indexName, e.getMessage()));
+    }
+  }
+
+  public Map<String,Object> getIndexInfo(String indexName) {
+    SearchOperations<String> opsForSearch = rmo.opsForSearch(indexName);
+    try {
+      return opsForSearch.getInfo();
+    } catch (JedisDataException jde) {
+      if (jde.getMessage().contains("Unknown index name")) {
+        return null;
+      } else {
+        throw jde;
+      }
+    }
   }
 }

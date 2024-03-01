@@ -23,4 +23,9 @@ public class EntityStreamImpl implements EntityStream {
     return new SearchStreamImpl<>(entityClass, modulesOperations, gsonBuilder, indexer);
   }
 
+  @Override
+  public <E> SearchStream<E> of(Class<E> entityClass, String indexName) {
+    return new SearchStreamImpl<>(entityClass, modulesOperations, gsonBuilder, indexer, indexName);
+  }
+
 }
