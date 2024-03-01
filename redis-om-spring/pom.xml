@@ -77,6 +77,7 @@
     <gson.version>2.10.1</gson.version>
     <djl.starter.version>0.23</djl.starter.version>
     <djl.version>0.23.0</djl.version>
+    <spring-ai.version>0.8.1-SNAPSHOT</spring-ai.version>
     <junit-bom.version>5.10.1</junit-bom.version>
   </properties>
 
@@ -86,6 +87,13 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
         <version>${spring.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.ai</groupId>
+        <artifactId>spring-ai-bom</artifactId>
+        <version>${spring-ai.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -202,6 +210,12 @@
       <groupId>ai.djl.huggingface</groupId>
       <artifactId>tokenizers</artifactId>
       <version>${djl.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-openai</artifactId>
+      <version>${spring-ai.version}</version>
     </dependency>
 
     <!-- test dependencies -->

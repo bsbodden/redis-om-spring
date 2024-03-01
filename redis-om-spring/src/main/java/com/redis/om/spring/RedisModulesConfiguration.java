@@ -35,6 +35,7 @@ import com.redis.om.spring.vectorize.face.FaceFeatureTranslator;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.ai.openai.OpenAiEmbeddingClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -283,9 +284,10 @@ public class RedisModulesConfiguration {
       @Nullable @Qualifier("djlImageFactory") ImageFactory imageFactory,
       @Nullable @Qualifier("djlDefaultImagePipeline") Pipeline defaultImagePipeline,
       @Nullable @Qualifier("djlSentenceTokenizer") HuggingFaceTokenizer sentenceTokenizer,
+      @Nullable OpenAiEmbeddingClient openAiEmbeddingClient,
       RedisOMProperties properties,
       ApplicationContext ac) {
-    return properties.getDjl().isEnabled() ? new DefaultFeatureExtractor( ac, imageEmbeddingModel, faceEmbeddingModel, imageFactory, defaultImagePipeline, sentenceTokenizer) : new NoopFeatureExtractor();
+    return properties.getDjl().isEnabled() ? new DefaultFeatureExtractor( ac, imageEmbeddingModel, faceEmbeddingModel, imageFactory, defaultImagePipeline, sentenceTokenizer, openAiEmbeddingClient) : new NoopFeatureExtractor();
   }
 
   @Bean(name = "redisJSONKeyValueAdapter")

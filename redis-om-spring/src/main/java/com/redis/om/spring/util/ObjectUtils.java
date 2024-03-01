@@ -412,12 +412,37 @@ public class ObjectUtils {
     return floatArrayToByteArray(longArrayToFloatArray(input));
   }
 
+  public static byte[] doubleListToByteArray(List<Double> doubleList) {
+    // Allocate ByteBuffer of appropriate size
+    ByteBuffer buffer = ByteBuffer.allocate(doubleList.size() * Double.BYTES);
+
+    // Fill the ByteBuffer with double values from the list
+    for (Double value : doubleList) {
+      buffer.putDouble(value);
+    }
+
+    // Convert ByteBuffer to byte[]
+    return buffer.array();
+  }
+
   public static float[] longArrayToFloatArray(long[] input) {
     float[] floats = new float[input.length];
     for (int i = 0; i < input.length; i++) {
       floats[i] = input[i];
     }
     return floats;
+  }
+
+  public static float[] doubleListToFloatArray(List<Double> doubleList) {
+    // Initialize float array of the same size as the List<Double>
+    float[] floatArray = new float[doubleList.size()];
+
+    // Iterate over the List<Double>, convert each Double to float, and store it in the float array
+    for (int i = 0; i < doubleList.size(); i++) {
+      floatArray[i] = doubleList.get(i).floatValue();
+    }
+
+    return floatArray;
   }
 
   public static float[] byteArrayToFloatArray(byte[] bytes) {

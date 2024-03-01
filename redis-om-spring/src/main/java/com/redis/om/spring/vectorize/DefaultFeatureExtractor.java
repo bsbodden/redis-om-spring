@@ -14,6 +14,8 @@ import com.redis.om.spring.annotations.Vectorize;
 import com.redis.om.spring.util.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.ai.openai.OpenAiEmbeddingClient;
+import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.PropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.context.ApplicationContext;
@@ -37,13 +39,14 @@ public class DefaultFeatureExtractor implements FeatureExtractor {
   public final HuggingFaceTokenizer sentenceTokenizer;
 
   private static final Log logger = LogFactory.getLog(DefaultFeatureExtractor.class);
+  private final OpenAiEmbeddingClient openAiEmbeddingClient;
 
   public DefaultFeatureExtractor( //
       ApplicationContext applicationContext, //
       ZooModel<Image, byte[]> imageEmbeddingModel, //
       ZooModel<Image, float[]> faceEmbeddingModel, //
       ImageFactory imageFactory, //
-      Pipeline imagePipeline, HuggingFaceTokenizer sentenceTokenizer) {
+      Pipeline imagePipeline, HuggingFaceTokenizer sentenceTokenizer, OpenAiEmbeddingClient openAiEmbeddingClient) {
     this.applicationContext = applicationContext;
     this.imageEmbeddingModel = imageEmbeddingModel;
     this.faceEmbeddingModel = faceEmbeddingModel;
@@ -53,6 +56,9 @@ public class DefaultFeatureExtractor implements FeatureExtractor {
 
     // feature extractor
     this.imageFeatureExtractor = ImageFeatureExtractor.builder().setPipeline(imagePipeline).build();
+
+    // openai client
+    this.openAiEmbeddingClient = openAiEmbeddingClient;
   }
 
   @Override
@@ -95,6 +101,16 @@ public class DefaultFeatureExtractor implements FeatureExtractor {
   public float[] getSentenceEmbeddingAsFloatArrayFor(String text) {
     Encoding encoding = sentenceTokenizer.encode(text);
     return longArrayToFloatArray(encoding.getIds());
+  }
+
+  public byte[] getOpenAISentenceEmbeddingsAsByteArrayFor(String text) {
+    List<Double> embeddings = this.openAiEmbeddingClient.embed(text);
+    return ObjectUtils.doubleListToByteArray(embeddings);
+  }
+
+  public float[] getOpenAISentenceEmbeddingAsFloatArrayFor(String text) {
+    List<Double> embeddings = this.openAiEmbeddingClient.embed(text);
+    return ObjectUtils.doubleListToFloatArray(embeddings);
   }
 
   @Override
@@ -140,11 +156,23 @@ public class DefaultFeatureExtractor implements FeatureExtractor {
               }
             }
             case SENTENCE -> {
-              if (isDocument) {
-                accessor.setPropertyValue(vectorize.destination(), getSentenceEmbeddingAsFloatArrayFor(fieldValue.toString()));
-              } else {
-                accessor.setPropertyValue(vectorize.destination(), getSentenceEmbeddingsAsByteArrayFor(fieldValue.toString()));
+              switch (vectorize.provider()) {
+                case DJL -> {
+                  if (isDocument) {
+                    accessor.setPropertyValue(vectorize.destination(), getSentenceEmbeddingAsFloatArrayFor(fieldValue.toString()));
+                  } else {
+                    accessor.setPropertyValue(vectorize.destination(), getSentenceEmbeddingsAsByteArrayFor(fieldValue.toString()));
+                  }
+                }
+                case OPENAI -> {
+                  if (isDocument) {
+                    accessor.setPropertyValue(vectorize.destination(), getOpenAISentenceEmbeddingAsFloatArrayFor(fieldValue.toString()));
+                  } else {
+                    accessor.setPropertyValue(vectorize.destination(), getOpenAISentenceEmbeddingsAsByteArrayFor(fieldValue.toString()));
+                  }
+                }
               }
+
             }
           }
         }

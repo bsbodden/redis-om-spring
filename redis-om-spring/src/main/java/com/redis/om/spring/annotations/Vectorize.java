@@ -8,4 +8,5 @@ import java.lang.annotation.*;
 public @interface Vectorize {
   String destination();
   EmbeddingType embeddingType() default EmbeddingType.SENTENCE;
+  EmbeddingProvider provider() default EmbeddingProvider.DJL;
 }
