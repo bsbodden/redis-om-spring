@@ -2,6 +2,8 @@ package com.redis.om.spring.metamodel;
 
 import com.github.f4b6a3.ulid.Ulid;
 import com.google.auto.service.AutoService;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.redis.om.spring.annotations.*;
 import com.redis.om.spring.metamodel.indexed.*;
 import com.redis.om.spring.metamodel.nonindexed.*;
@@ -29,6 +31,7 @@ import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,9 +43,13 @@ import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
 
-@SupportedAnnotationTypes(value = { "com.redis.om.spring.annotations.Document",
-    "org.springframework.data.redis.core.RedisHash" })
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
+@SupportedAnnotationTypes(
+  value = { //
+    "com.redis.om.spring.annotations.Document", //
+    "org.springframework.data.redis.core.RedisHash" //
+  }
+)
+@SupportedSourceVersion(SourceVersion.RELEASE_21)
 @AutoService(Processor.class)
 public final class MetamodelGenerator extends AbstractProcessor {
 
@@ -237,7 +244,8 @@ public final class MetamodelGenerator extends AbstractProcessor {
         TypeName entityField = TypeName.get(field.asType());
 
         TypeMirror fieldType = field.asType();
-        String fullTypeClassName = fieldType.toString();
+        String fullTypeClassName = fieldType.toString().replace("@lombok.NonNull ", "").trim();
+
         String cls = ObjectUtils.getTargetClassName(fullTypeClassName);
 
         if (field.asType().getKind().isPrimitive()) {
@@ -579,7 +587,11 @@ public final class MetamodelGenerator extends AbstractProcessor {
             .filter(ee -> ee.getEnclosedElements().stream()
                 .noneMatch(eee -> eee.getKind() == ElementKind.PARAMETER))
             // Todo: Filter out methods that returns void or Void
-            .collect(Collectors.toMap(e -> e.getSimpleName().toString(), Function.identity()));
+            .collect(Collectors.toMap(
+                e -> e.getSimpleName().toString(),
+                Function.identity(),
+                (v1, v2) -> v1 // Merge function to handle duplicate keys
+            ));
 
         final Set<String> isGetters = getters.values().stream()
             // todo: Filter out methods only returning boolean or Boolean
@@ -587,14 +599,15 @@ public final class MetamodelGenerator extends AbstractProcessor {
             .map(n -> n.substring(2))
             .map(ObjectUtils::toLowercaseFirstCharacter).collect(Collectors.toSet());
 
+        // Use a mutable map to collect the results
+        Map<Element, String> results = new HashMap<>();
+
         // Retrieve all declared non-final instance fields of the annotated class
-        Map<Element, String> results = element.getEnclosedElements().stream()
-            .filter(ee -> ee.getKind().isField() && !ee.getModifiers().contains(Modifier.STATIC) // Ignore static
-                // fields
+        element.getEnclosedElements().stream()
+            .filter(ee -> ee.getKind().isField() && !ee.getModifiers().contains(Modifier.STATIC) // Ignore static fields
                 && !ee.getModifiers().contains(Modifier.FINAL)) // Ignore final fields
-            .collect(Collectors.toMap(Function.identity(),
-                ee -> findGetter(ee, getters, isGetters, element.toString(),
-                    lombokGetterAvailable(element, ee))));
+            .forEach(ee -> results.put(ee,
+                findGetter(ee, getters, isGetters, element.toString(), lombokGetterAvailable(element, ee))));
 
         Types types = processingEnvironment.getTypeUtils();
         List<? extends TypeMirror> superTypes = types.directSupertypes(element.asType());
@@ -690,6 +703,23 @@ public final class MetamodelGenerator extends AbstractProcessor {
         if (!field.getModifiers().contains(Modifier.PROTECTED) && !field.getModifiers().contains(Modifier.PRIVATE)) {
             // We can use a lambda. Great escape hatch!
             return lambdaName + " -> " + lambdaName + "." + fieldName;
+        }
+
+        // Handle specific cases for java.lang.String, java.lang.Enum, and java.util.Date
+        if (field.getEnclosingElement().toString().equals("java.lang.String")) {
+            if (fieldName.equals("hash") || fieldName.equals("hashIsZero")) {
+                return lambdaName + " -> 0"; // Return a default value for hash and hashIsZero
+            }
+        } else if (field.getEnclosingElement().toString().equals("java.lang.Enum")) {
+            if (fieldName.equals("hash")) {
+                return lambdaName + " -> 0"; // Return a default value for hash
+            }
+        } else if (field.getEnclosingElement().toString().equals("java.util.Date")) {
+            if (fieldName.equals("fastTime")) {
+                return lambdaName + " -> " + lambdaName + ".getTime()"; // Use getTime() as a fallback for fastTime
+            } else if (fieldName.equals("cdate")) {
+                return lambdaName + " -> " + lambdaName + ".getTime()"; // Use getTime() as a fallback for cdate
+            }
         }
 
         // default to thrower
