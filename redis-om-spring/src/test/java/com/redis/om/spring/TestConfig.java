@@ -21,7 +21,7 @@ public class TestConfig {
     String host = env.getProperty("spring.redis.host", "localhost");
     int port = env.getProperty("spring.redis.port", Integer.class, 6379);
 
-    RedisStandaloneConfiguration conf = new RedisStandaloneConfiguration(host, port);
+    RedisStandaloneConfiguration conf = new RedisStandaloneConfiguration(/*host, port*/);
 
     final JedisPoolConfig poolConfig = new JedisPoolConfig();
     poolConfig.setTestWhileIdle(false);
