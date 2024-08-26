@@ -1,0 +1,7 @@
+services:
+    client:
+        image: nginx
+        ports:
+            - 8000:80
+        volumes:
+            - ./target/site:/usr/share/nginx/html

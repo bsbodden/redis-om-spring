@@ -21,12 +21,25 @@ tmp/
 ### IDEA ###
 .idea
 .run/*
+*.iml
 
 ### Mac ###
 **/.DS_Store
 redis-om-spring/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
 redis-om-spring/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
 
-# spelling
+### Github Spelling Action ###
 *.dic
 /demos/roms-vss/src/main/resources/static/product-images/
+
+### Node / Docs / Antora ###
+docs/logs
+docs/*.log
+docs/npm-debug.log*
+docs/yarn-debug.log*
+docs/yarn-error.log*
+docs/lerna-debug.log*
+docs/.pnpm-debug.log*
+docs/node
+docs/node_modules
+docs/target

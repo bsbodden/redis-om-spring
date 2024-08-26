@@ -1,0 +1,355 @@
+= EntityStreams Reference Manual
+
+The `EntityStream` API in Redis OM Spring provides a Java 8 Streams-like interface for searching Redis documents and hashes. It allows executing search queries and aggregations as a stream pipeline.
+
+== Creating a Stream
+
+To create a stream:
+
+[source,java]
+----
+SearchStream<Company> stream = entityStream.of(Company.class);
+----
+
+This will create a stream of all `Company` entities.
+
+== Filtering
+
+The stream can be filtered using field equality predicates:
+
+[source,java]
+----
+List<Company> companies = stream
+  .filter(Company$.NAME.eq("RedisInc"))
+  .collect(Collectors.toList());
+----
+
+Other field predicates:
+
+* `notEq` - Not equal to
+* `gt` - Greater than
+* `ge` - Greater than or equal to
+* `lt` - Less than
+* `le` - Less than or equal to
+* `between` - Between two values
+* `in` - One of a list of values
+* `like` - SQL like predicate
+* `notLike` - Not like
+* `containing` - Contains text
+* `notContaining` - Does not contain text
+* `startsWith` - Starts with text
+* `endsWith` - Ends with text
+
+Boolean field predicates:
+
+* `isTrue` - Is true
+* `isFalse` - Is false
+
+Location field predicates:
+
+* `near` - Near a geo point and distance
+* `outsideOf` - Outside area defined by point and radius
+
+Multiple predicates can be combined with `and` and `or`.
+
+== Projecting
+
+Results can be projected to specific fields:
+
+[source,java]
+----
+List<String> names = stream
+  .map(Company$.NAME)
+  .collect(Collectors.toList());
+----
+
+== Aggregations
+
+Aggregations like `count`, `min`, `max` etc. are supported:
+
+[source,java]
+----
+long count = stream
+  .filter(Company$.NAME.eq("RedisInc"))
+  .count();
+----
+
+== Collecting
+
+The stream can be collected into a `List`:
+
+[source,java]
+----
+List<Company> companies = stream
+  .filter(Company$.NAME.eq("RedisInc"))
+  .collect(Collectors.toList());
+----
+
+== Sorting
+
+Results can be sorted by one or more fields:
+
+[source,java]
+----
+List<Company> companies = stream
+  .sorted(Company$.NAME)
+  .collect(Collectors.toList());
+----
+
+Sort order can be specified as `ASC` or `DESC`.
+
+== Limiting
+
+The number of results can be limited:
+
+[source,java]
+----
+List<Company> companies = stream
+  .limit(10)
+  .collect(Collectors.toList());
+----
+
+== Skipping
+
+Results can be skipped:
+
+[source,java]
+----
+List<Company> companies = stream
+  .skip(10)
+  .collect(Collectors.toList());
+----
+
+== Terminal Operations
+
+Terminal operations like `forEach` and `iterator` are supported:
+
+[source,java]
+----
+stream.forEach(c -> {
+  // do something with company c
+});
+----
+
+== Modifying Documents
+
+Document fields can be modified directly in the stream:
+
+[source,java]
+----
+stream
+  .filter(Company$.NAME.eq("RedisInc"))
+  .forEach(Company$.YEAR_FOUNDED.incrBy(5));
+----
+
+Supported field mutations:
+
+* `incrBy` - Increment numeric field
+* `decrBy` - Decrement numeric field
+* `append` - Append text to string field
+* `prepend` - Prepend text to string field
+* `toggle` - Toggle boolean value
+
+== Array Operations
+
+Array fields like tags can be manipulated:
+
+[source,java]
+----
+stream
+  .filter(Company$.NAME.eq("RedisInc"))
+  .forEach(Company$.TAGS.add("inmemory"));
+----
+
+Supported array operations:
+
+* `add` - Add value to array
+* `insert` - Insert value at index
+* `remove` - Remove value
+* `removeFirst` - Remove first element
+* `removeLast` - Remove last element
+* `pop` - Pop element from array
+* `length` - Get array length
+
+This provides an overview of the core capabilities of the EntityStreams API. Refer to the Javadocs and test code for more details.
+
+== EntityStreams API Reference - pArt 2
+
+The EntityStreams API in the Redis OM Spring library provides a Java 8 Streams API-like interface to search `@Document` and `@RedisHash` annotated Spring Entities. The goal of the API is to enable efficient data processing and complex querying of Redis data.
+
+== Prerequisites
+
+To use the EntityStreams API, you will need:
+
+* Basic understanding of Java and Spring Boot.
+* Familiarity with Redis and its data structures.
+* An installed version of Redis.
+* A running instance of a Spring Boot application.
+
+== Setting Up the Entity Classes
+
+Annotated your classes with `@Document` or `@RedisHash` and use `@Indexed` or `@Searchable` to index the fields. For example, the `Company` class:
+
+[source,java]
+----
+@Document
+public class Company {
+  @Id
+  private String id;
+
+  @Searchable(sortable = true)
+  private String name;
+
+  // additional fields and methods...
+}
+----
+
+== Using the EntityStreams API
+
+The EntityStreams API is designed to be intuitive and familiar to developers who have used the Java 8 Streams API.
+
+=== Creating a SearchStream
+
+A `SearchStream` can be created using the `entityStream.of()` method, which takes a class type parameter:
+
+[source,java]
+----
+@Autowired EntityStream entityStream;
+
+SearchStream<Company> companyStream = entityStream.of(Company.class);
+----
+
+=== Filtering
+
+You can filter a SearchStream using the `filter()` method:
+
+[source,java]
+----
+SearchStream<Company> companyStream = entityStream.of(Company.class);
+SearchStream<Company> filteredStream = companyStream.filter("@name:Redis*");
+----
+
+=== Grouping and Reducing
+
+The API supports grouping by fields and reducing the groups. For example, you can group companies by their founded year and count the number of companies founded each year:
+
+[source,java]
+----
+List<Pair<Integer, Long>> companiesPerYear = companyStream
+  .groupBy(Company$.yearFounded)
+  .reduce(ReducerFunction.COUNT, Alias.of("_id"))
+  .toList(Integer.class, Long.class);
+----
+
+=== Pagination
+
+The API supports pagination using the `limit()` method:
+
+[source,java]
+----
+List<Company> firstPageCompanies = companyStream.limit(0, 10).toList(Company.class);
+----
+
+=== Sorting
+
+The API supports sorting using the `sort()` method:
+
+[source,java]
+----
+List<Company> sortedCompanies = companyStream.sort(Alias.of("name").asc()).toList(Company.class);
+----
+
+=== Other Operations
+
+The EntityStreams API also supports more complex operations, including:
+
+* Applying transformations: The `apply()` method allows you to change the field name during processing.
+* Reducing with multiple fields: You can reduce with multiple fields by chaining `reduce()` calls.
+
+Here's an example that showcases both:
+
+[source,java]
+----
+List<Triple<String, Long, Long>> result = companyStream
+  .apply("@name", "name")
+  .groupBy(Alias.of("name"))
+  .reduce(ReducerFunction.COUNT, Alias.of("_id")).as("count")
+  .reduce(ReducerFunction.SUM, Company$.yearFounded).as("totalYearFounded")
+  .toList(String.class, Long.class, Long.class);
+----
+
+== Conclusion
+
+The EntityStreams API in the Redis OM Spring library provides a powerful and intuitive way to query and process data in Redis. With support for filtering, grouping, reducing, pagination, and sorting, it enables complex querying of Redis data with a familiar and user-friendly interface.
+
+Here is an AsciiDoc manual page on pagination with EntityStreams:
+
+== EntityStream Pagination
+
+The EntityStreams API supports pagination of results using cursors or Spring Data style page slicing.
+
+== Explicit Cursors
+
+Cursors can be used to explicitly paginate results:
+
+[source,java]
+----
+int pageSize = 100;
+
+SearchStream<T> stream = entityStream.of(MyEntity.class);
+
+AggregationResult result = stream
+  .cursor(pageSize, Duration.ofHours(1)) <1>
+  .loadAll()
+  .aggregate();
+
+long cursorId = result.getCursorId(); <2>
+
+while(cursorId != 0) {
+  AggregationResult page = stream.getSearchOperations().cursorRead(cursorId, pageSize); <3>
+
+  // process page
+
+  cursorId = page.getCursorId();
+}
+----
+<1> Enable cursor with page size and idle timeout
+<2> Get cursor id from first page
+<3> Read next page using cursor id
+
+The cursor id is used to paginate subsequent calls.
+
+== Managed Cursors
+
+Cursors can be managed using Spring Data style page slicing:
+
+[source,java]
+----
+int pageSize = 100;
+
+SearchStream<T> stream = entityStream.of(MyEntity.class);
+
+Page<T> page = stream
+  .loadAll()
+  .limit(1000)
+  .toList(PageRequest.ofSize(pageSize)); <1>
+
+while (page.hasContent()) {
+
+  // process page
+
+  page = page.hasNext() ?
+    stream.getSlice(page.nextPageable()) : <2>
+    Page.empty();
+
+}
+----
+<1> Collect results into page with defined page size
+<2> Load next page if available
+
+The `SearchStream` handles the cursor automatically.
+
+Refer to the Javadocs and tests for more examples.
+
+
+

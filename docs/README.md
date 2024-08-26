@@ -1,0 +1,7 @@
+= Building Antora with Maven example
+
+Simple project showing how to build an Antora site with Maven.
+
+```
+./mvnw compile -pl docs
+```

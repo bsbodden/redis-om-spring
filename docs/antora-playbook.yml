@@ -1,0 +1,12 @@
+site:
+    title: Antora Docs
+    start_page: redis-om-spring::index.adoc
+content:
+    sources:
+        - url: ..
+          branches: HEAD
+          start_path: docs/content
+ui:
+    bundle:
+        url: https://github.com/bsbodden/antora-ui-redis/releases/download/v0.0.1/ui-bundle.zip
+        snapshot: true

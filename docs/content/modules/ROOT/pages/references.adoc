@@ -1,0 +1,74 @@
+= Document References
+
+Redis OM Spring supports references between documents.
+
+== Defining References
+
+Reference fields are defined like regular fields:
+
+[source,java]
+----
+public class City {
+
+  private State state;
+
+  // ...
+
+}
+----
+
+The referenced document type must be a Redis OM entity.
+
+== Fetching References
+
+Unlike some ORM's, references are fetched *eagerly* in Redis OM:
+
+[source,java]
+----
+City city = cityRepository.findById("1");
+
+State state = city.getState(); // state is loaded already
+----
+
+No extra queries are needed to get the referenced document.
+
+== Querying References
+
+References can be queried via fields:
+
+[source,java]
+----
+List<City> cities = repository.findByState(state);
+----
+
+Standard query methods are supported.
+
+== Collections
+
+References can be stored in collections:
+
+[source,java]
+----
+public class Region {
+
+  private Set<State> states;
+
+  // ...
+
+}
+----
+
+The collection is fetched completely when accessed.
+
+== Entity Streams
+
+References work with `EntityStream`:
+
+[source,java]
+----
+EntityStream.of(City.class)
+  .filter(City$.STATE.eq(state))
+  .collect(Collectors.toList());
+----
+
+Overall, references provide an easy way to model relationships between documents in Redis OM.
