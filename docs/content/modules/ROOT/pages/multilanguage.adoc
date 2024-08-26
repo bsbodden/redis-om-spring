@@ -1,0 +1,71 @@
+= Multi-Language Support
+
+Redis OM Spring provides multi-language search capabilities.
+
+== Setting Document Language
+
+The document language can be specified when indexing:
+
+[source,java]
+----
+SpanishDoc doc = new SpanishDoc("Don Quijote", "sample text");
+
+spanishDocRepository.save(doc, SearchLanguage.SPANISH);
+----
+
+This defines Spanish stemming and tokenization.
+
+== Querying
+
+Queries can specify a language:
+
+[source,java]
+----
+SearchResults results = repository.search("sample text", SearchLanguage.SPANISH);
+----
+
+The query text will use Spanish tokenization and stemming.
+
+== Stemming
+
+Languages have built-in stemming rules.
+
+For example, in English:
+
+[source]
+----
+"writing" -> "writ"
+"happiness" -> "happi"
+----
+
+So searches for "writ" or "happi" will match the original terms.
+
+Stemming allows matching related terms without needing all variations.
+
+== Supported Languages
+
+Redis OM Spring supports:
+
+- English
+- Spanish
+- French
+- German
+- Italian
+- Portuguese
+- Russian
+- Dutch
+- Romanian
+- Hungarian
+- Finnish
+- Catalan
+- Hindi
+- Arabic
+- Turkish
+- Danish
+- Norwegian
+- Swedish
+- Czech
+
+Refer to Redis documentation for details on each language's stemming rules.
+
+This allows indexing and searching documents in multiple languages with Redis OM.

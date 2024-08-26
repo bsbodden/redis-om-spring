@@ -1,0 +1,181 @@
+[[setup]]
+= Setup and Configuration
+
+Redis OM Spring is designed to work with the Redis Stack compatible distribution providing the following extended Redis capabilities:
+
+* **Search**: The enhanced Redis experience with Redis Stack provides querying capabilities, secondary indexing, full-text search, vector similarity search, and more. See https://redis.io/docs/interact/search-and-query/
+* **JSON**: The JSON capability of Redis Stack provides JavaScript Object Notation (JSON) support for Redis. It lets you store, update, and retrieve JSON values in a Redis database, similar to any other Redis data type. Redis JSON also works seamlessly with Search and Query to let you index and query JSON documents. See https://redis.io/docs/data-types/json/
+* **Probabilistic**: probabilistic data structures to Redis, including Bloom filter, Cuckoo filter, Count-min sketch, Top-K, and t-digest. Using this capability, you can query streaming data without needing to store all the elements of the stream. See https://redis.io/docs/data-types/probabilistic/
+
+== Requirements
+
+Redis OM Spring binaries require JDK level 17 and above and Spring Framework 6.0.11 and above.
+
+Redis OM Spring is currently tested against the latest Redis Stack release.
+
+== Redis Stack
+
+The Redis Community site provides instructions on how to install Redis Stack. See https://redis.io/docs/getting-started/install-stack/ for several options.
+
+The Redis OM Spring project itself provides a docker compose file included at the root of the GitHub repository:
+
+[source,dockerfile]
+----
+version: "3.9"
+services:
+  redis:
+    image: "redis/redis-stack:edge"
+    ports:
+      - "6379:6379"
+    environment:
+      - "REDIS_ARGS=--appendonly yes"
+    volumes:
+      - ./data:/data
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+----
+
+To launch the Redis Stack container use the `docker compose` command:
+
+[source,bash]
+----
+docker compose up
+----
+
+== Library Dependency
+
+Add Redis OM Spring library dependency to your application's Maven or Gradle build.
+
+=== Maven configuration
+
+Add the following to the `pom.xml` file dependencies element:
+
+[source,xml]
+----
+<dependency>
+  <groupId>com.redis.om</groupId>
+  <artifactId>redis-om-spring</artifactId>
+  <version>${version}</version>
+</dependency>
+----
+
+==== Explicitly configuring OM as an annotation processor
+
+Redis OM Spring uses code generation to create "Metamodels", so it has to be configured as an annotation processor. This
+normally just happens with Maven, when you run `./mvnw spring-boot:run`. Some users have experienced this not being the case, in which I recommend to explicitly declaring the `maven-compiler-plugin` in the case below it is paired with
+an app created with [`start.spring.io`](https://start.spring.io/) with Spring Boot `v3.1.2` (all other versions can be
+inherited from the parent poms):
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <version>${maven-compiler-plugin.version}</version>
+  <configuration>
+    <annotationProcessorPaths>
+      <path>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-configuration-processor</artifactId>
+        <version>3.1.2</version>
+      </path>
+      <path>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>${lombok.version}</version>
+      </path>
+      <path>
+        <groupId>com.redis.om</groupId>
+        <artifactId>redis-om-spring</artifactId>
+        <version>0.8.7-SNAPSHOT</version>
+      </path>
+    </annotationProcessorPaths>
+  </configuration>
+</plugin>
+----
+
+==== Using Snapshots Releases
+
+To use `-SNAPSHOT` releases add the Snapshots Repository to you your Maven POM:
+
+[source,xml]
+----
+  <repositories>
+    <repository>
+      <id>snapshots-repo</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
+  </repositories>
+----
+
+and
+
+[source,xml]
+----
+<dependency>
+  <groupId>com.redis.om</groupId>
+  <artifactId>redis-om-spring</artifactId>
+  <version>${version}-SNAPSHOT</version>
+</dependency>
+----
+
+=== Gradle configuration
+
+Similarly, for Gradle add:
+
+[source,groovy]
+----
+ext {
+  redisOmVersion = '0.8.7-SNAPSHOT'
+}
+
+dependencies {
+  implementation "com.redis.om:redis-om-spring:$redisOmVersion"
+  annotationProcessor "com.redis.om:redis-om-spring:$redisOmVersion"
+}
+----
+
+==== Using Snapshot Releases
+
+To use `-SNAPSHOT` releases add the Snapshots Repository to you your Gradle build.gradle add:
+
+[source,groovy]
+----
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+----
+
+== Redis Connection
+
+By default, Redis OM Spring connects to `localhost` at port `6379`. If
+your instance is running somewhere else, you can configure the connection
+in your `application.properties` or `application.yaml`:
+
+In `applications.properties`:
+
+[source,properties]
+----
+spring.data.redis.host=your.cloud.db.redislabs.com                                                                                                                                                                                                                    |
+spring.data.redis.port=12345
+spring.data.redis.password=xxxxxxxx
+spring.data.redis.username=default
+----
+
+In `applications.yaml`:
+
+[source,yaml]
+----
+spring:
+  data:
+    redis:
+      host: your.cloud.db.redislabs.com
+      port: 12345
+      password: xxxxxxxx
+      username: default
+----

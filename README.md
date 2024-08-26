@@ -72,13 +72,12 @@ Redis ([SDR](https://spring.io/projects/spring-data-redis)) framework.
 This **preview** release provides all Spring Data Redis, plus:
 
 * `@Document` annotation to map Spring Data models to Redis JSON documents
-* Enhancement to the Spring Data Redis `@RedisHash` via `@EnableRedisEnhancedRepositories`:
-    - uses Redis' native search engine (RediSearch) for secondary indexing
-    - uses [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
-* `RedisDocumentRepository` with automatic implementation of Repository interfaces for complex querying capabilities
-  using `@EnableRedisDocumentRepositories`
-* Declarative search indexes via `@Indexed`
-* Full-text search indexes via `@Searchable`
+* Enhances SDRs `@RedisHash` via `@EnableRedisEnhancedRepositories` to:
+  - use Redis' native search engine (RediSearch) for secondary indexing
+  - use [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
+* `RedisDocumentRepository` with automatic implementation of Repository interfaces for complex querying capabilities using `@EnableRedisDocumentRepositories`
+* Declarative Search Indices via `@Indexed`
+* Full-text Search Indices via `@Searchable`
 * `EntityStream`s: Streams-based Query and Aggregations Builder
 * `@Bloom` annotation to determine very fast, with and with high degree of certainty, whether a value is in a
   collection.

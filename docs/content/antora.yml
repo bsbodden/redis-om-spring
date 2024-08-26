@@ -1,0 +1,6 @@
+name: redis-om-spring
+version: true
+title: Redis OM Spring
+start_page: ROOT:index.asc
+nav:
+  - modules/ROOT/nav.adoc

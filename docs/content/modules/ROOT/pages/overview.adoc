@@ -1,0 +1,20 @@
+[[overview]]
+= Overview
+
+Redis OM Spring, is based on the versatile Spring Data Redis framework (SDR), part of the larger Spring Data family. SDR provides easy configuration and access to Redis Open Source Distribution from Spring applications. It offers both low-level and high-level abstractions for interacting with OSS Redis.
+
+This **preview/beta** version of Redis OM Spring targets the Redis Stack, Enterprise Redis and Redis Cloud distributions inherits all of SDR capabilities plus:
+
+* `@Document` annotation to map Spring Data models to Redis JSON documents
+* Enhances SDRs `@RedisHash` via `@EnableRedisEnhancedRepositories` to:
+  - use Redis' native search engine (RediSearch) for secondary indexing
+  - uses [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
+* `RedisDocumentRepository` with automatic implementation of Repository interfaces for complex querying capabilities using `@EnableRedisDocumentRepositories`
+* Declarative Search Indices via `@Indexed`
+* Full-text Search Indices via `@Searchable`
+* `EntityStream`s: Streams-based Query and Aggregations Builder
+* `@Bloom` annotation to determine very fast, with and with high degree of certainty, whether a value is in a collection.
+* `@Vectorize` annotation to generate embeddings for text and images for use in Vector Similarity Searches
+* Vector Similarity Search API (See [Redis Stack Vectors](https://redis.io/docs/stack/search/reference/vectors/))
+
+**Note:** Redis OM Spring depends on Jedis library.
