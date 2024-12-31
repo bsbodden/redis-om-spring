@@ -1,5 +1,5 @@
 redis:
   om:
     spring:
-      djl:
-        enabled: true
+      ai:
+        \enabled: true
