@@ -1,0 +1,173 @@
+[[query-by-example.running]]
+== Running an Example
+
+The following example uses Query by Example against a repository:
+
+.Query by Example using a Repository
+====
+[source, java]
+----
+interface PersonRepository extends QueryByExampleExecutor<Person> {
+}
+
+class PersonService {
+
+  @Autowired PersonRepository personRepository;
+
+  List<Person> findPeople(Person probe) {
+    return personRepository.findAll(Example.of(probe));
+  }
+}
+----
+====
+
+Redis Repositories support, with their secondary indexes, a subset of Spring Data's Query by Example features.
+In particular, only exact, case-sensitive, and non-null values are used to construct a query.
+
+Secondary indexes use set-based operations (Set intersection, Set union) to determine matching keys. Adding a property to the query that is not indexed returns no result, because no index exists. Query by Example support inspects indexing configuration to include only properties in the query that are covered by an index. This is to prevent accidental inclusion of non-indexed properties.
+
+Case-insensitive queries and unsupported `StringMatcher` instances are rejected at runtime.
+
+The following list shows the supported Query by Example options:
+
+* Case-sensitive, exact matching of simple and nested properties
+* Any/All match modes
+* Value transformation of the criteria value
+* Exclusion of `null` values from the criteria
+
+The following list shows properties not supported by Query by Example:
+
+* Case-insensitive matching
+* Regex, prefix/contains/suffix String-matching
+* Querying of Associations, Collection, and Map-like properties
+* Inclusion of `null` values from the criteria
+* `findAll` with sorting
+
+== Query By Example - Part 2
+
+Query by Example (QBE) is a powerful and user-friendly querying technique available in Redis OM Spring. It allows you to dynamically create queries without having to write query code or use the underlying query language.
+
+== Usage
+
+To perform a query by example:
+
+. Create an instance of the entity class and populate some of its fields to use as the probe. For example:
+
+[source,java]
+----
+MyDoc template = new MyDoc(); 
+template.setTitle("Hello World");
+----
+
+. Create an `Example` from the probe. You can customize the matching behavior by providing an `ExampleMatcher`.
+
+[source,java]
+----
+Example<MyDoc> example = Example.of(template);
+----
+
+. Call one of the `findBy`, `findOne` or `findAll` repository methods, passing in the `Example`. For example: 
+
+[source,java]
+----
+List<MyDoc> results = repository.findAll(example); 
+----
+
+== Matching behavior
+
+The default matching behavior requires all populated fields in the probe to match. You can customize this via the `ExampleMatcher`.
+
+For example, to change it to match _any_ of the fields:
+
+[source,java]
+----
+Example<MyDoc> example = Example.of(template, ExampleMatcher.matchingAny());
+----
+
+Or to ignore certain fields:
+
+[source,java]
+----
+Example<MyDoc> example = Example.of(template, 
+  ExampleMatcher.matchingAny().withIgnorePaths("ignoredField"));
+----
+
+== Fetching results
+
+You can use the returned `FetchableFluentQuery` from `findBy` to further customize how results are fetched:
+
+[source,java]
+----
+MyDoc result = repository.findBy(example, FetchableFluentQuery::oneValue); 
+
+List<MyDoc> allResults = repository.findBy(example, FetchableFluentQuery::all);
+
+Long count = repository.findBy(example, FetchableFluentQuery::count);
+----
+
+This allows you to apply sorting, pagination, projections, etc.
+
+== Example entity queries
+
+Here are some examples of query by example for entities annotated with `@Document` and `@RedisHash`:
+
+=== Find by ID
+
+[source,java]
+----
+MyDoc template = new MyDoc();
+template.setId(id); <1>
+
+Example<MyDoc> example = Example.of(template);
+Optional<MyDoc> result = repository.findOne(example); <2>
+----
+<1> Populate ID field
+<2> Find single result 
+
+=== Find by indexed property
+
+[source,java]   
+----
+MyDoc template = new MyDoc();
+template.setTitle("Some title"); <1>
+
+Example<MyDoc> example = Example.of(template);
+
+List<MyDoc> results = repository.findAll(example); <2>
+----
+<1> Populate indexed property 
+<2> Find matches
+
+=== Find by multiple properties
+
+[source,java]
+----
+MyDoc template = new MyDoc();
+template.setTitle("Some title");
+template.setTags(Set.of("news")); <1>
+
+Example<MyDoc> example = Example.of(template);
+
+List<MyDoc> results = repository.findAll(example); <2> 
+----
+<1> Populate multiple fields
+<2> Find matches on all fields
+
+=== Use custom matching
+
+[source,java]
+----
+MyDoc template = new MyDoc();
+template.setTitle("Some title");
+
+ExampleMatcher matcher = 
+  ExampleMatcher.matchingAny().withIgnorePaths("ignoredField"); <1>
+
+Example<MyDoc> example = Example.of(template, matcher); <2>
+
+List<MyDoc> results = repository.findAll(example);
+----
+<1> Customize matching behavior
+<2> Pass ExampleMatcher to Example
+
+This covers the basics of using query by example with Redis OM Spring! Let me know if you need any clarification or have additional questions.
