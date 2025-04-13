@@ -1,0 +1,335 @@
+= Configuration
+:page-toclevels: 3
+:page-pagination:
+
+This guide covers the configuration options for Redis OM Spring, including Redis connection settings, AI integration, and customization options.
+
+== Basic Configuration
+
+Redis OM Spring uses Spring Boot's auto-configuration capabilities to simplify setup. In most cases, you only need to add the dependency to your project and configure your Redis connection.
+
+=== Maven Dependencies
+
+[source,xml]
+----
+<dependency>
+  <groupId>com.redis.om</groupId>
+  <artifactId>redis-om-spring</artifactId>
+  <version>${redis-om-version}</version>
+</dependency>
+----
+
+For Spring AI integration, add:
+
+[source,xml]
+----
+<dependency>
+  <groupId>org.springframework.ai</groupId>
+  <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+  <version>0.8.0</version>
+</dependency>
+----
+
+=== Gradle Dependencies
+
+[source,groovy]
+----
+dependencies {
+  implementation "com.redis.om:redis-om-spring:${redisOmVersion}"
+  annotationProcessor "com.redis.om:redis-om-spring:${redisOmVersion}"
+  
+  // For Spring AI integration
+  implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter:0.8.0'
+}
+----
+
+== Redis Connection Configuration
+
+Redis OM Spring uses the standard Spring Data Redis connection properties to configure the Redis connection.
+
+=== Properties File Configuration
+
+[source,properties]
+----
+# Redis connection settings
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+spring.data.redis.username=default
+spring.data.redis.password=
+spring.data.redis.ssl=false
+
+# Redis Sentinel configuration (if applicable)
+spring.data.redis.sentinel.master=mymaster
+spring.data.redis.sentinel.nodes=localhost:26379,localhost:26380,localhost:26381
+----
+
+=== YAML Configuration
+
+[source,yaml]
+----
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      username: default
+      password: 
+      ssl: false
+      
+      # Redis Sentinel configuration (if applicable)
+      sentinel:
+        master: mymaster
+        nodes: localhost:26379,localhost:26380,localhost:26381
+----
+
+== Redis OM Specific Configuration
+
+Redis OM Spring adds several specific configuration properties to customize its behavior.
+
+=== Redis OM Properties
+
+[source,yaml]
+----
+redis:
+  om:
+    # ID Generation
+    ulid-parsing-strategy: canonical  # canonical, base32, crockford
+    
+    # Entity Auditing
+    entity-auditing-enabled: true
+    
+    # Repository Configuration
+    repository:
+      support-wildcard-scan: true
+----
+
+=== AI Integration Properties
+
+[source,yaml]
+----
+redis:
+  om:
+    ai:
+      # Embedding provider configuration
+      embedding-provider: azure-openai  # open-ai, azure-openai, hf, spring-ai, custom
+      embedding-model: text-embedding-ada-002
+      
+      # OpenAI configuration
+      api-key: ${OPENAI_API_KEY}
+      
+      # Azure OpenAI configuration
+      azure-resource-name: your-azure-resource
+      azure-deployment-id: your-deployment-id
+      azure-api-version: 2023-05-15
+      
+      # Azure Entra ID authentication
+      entra-id:
+        enabled: true
+        client-id: ${AZURE_CLIENT_ID}
+        tenant-id: ${AZURE_TENANT_ID}
+        client-secret: ${AZURE_CLIENT_SECRET}
+----
+
+== Repository Configuration
+
+=== Enabling Redis Document Repositories
+
+To enable Redis Document repositories (using RedisJSON), add the `@EnableRedisDocumentRepositories` annotation to your configuration class:
+
+[source,java]
+----
+@SpringBootApplication
+@EnableRedisDocumentRepositories(basePackages = "com.example.model")
+public class MyApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args);
+    }
+}
+----
+
+=== Enabling Enhanced Redis Hash Repositories
+
+To enable enhanced Redis Hash repositories, add the `@EnableRedisEnhancedRepositories` annotation:
+
+[source,java]
+----
+@SpringBootApplication
+@EnableRedisEnhancedRepositories(basePackages = "com.example.model")
+public class MyApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args);
+    }
+}
+----
+
+You can use both annotations together if you need both types of repositories.
+
+== Advanced Configuration
+
+=== Custom Redis Client
+
+For more advanced Redis configuration, you can define your own Redis client bean:
+
+[source,java]
+----
+@Configuration
+public class RedisConfig {
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory();
+        // Configure connection factory
+        return connectionFactory;
+    }
+}
+----
+
+=== Custom Embedding Provider
+
+You can create a custom embedding provider by implementing the `Embedder` interface:
+
+[source,java]
+----
+@Component
+public class CustomEmbedder implements Embedder {
+    @Override
+    public float[] embed(String text) {
+        // Custom embedding logic
+        return embeddingArray;
+    }
+    
+    @Override
+    public float[] embedImage(String imagePath) {
+        // Custom image embedding logic
+        return embeddingArray;
+    }
+}
+----
+
+=== Custom Converters
+
+You can register custom converters for type conversion:
+
+[source,java]
+----
+@Configuration
+public class RedisOMConfig {
+    @Bean
+    public RedisCustomConversions redisCustomConversions() {
+        List<Converter<?, ?>> converters = new ArrayList<>();
+        converters.add(new MyCustomConverter());
+        return new RedisCustomConversions(converters);
+    }
+}
+----
+
+== Redis Sentinel Configuration
+
+Redis OM Spring provides comprehensive support for Redis Sentinel, which ensures high availability for your Redis deployment.
+
+[source,yaml]
+----
+spring:
+  data:
+    redis:
+      sentinel:
+        master: mymaster
+        nodes: sentinel1:26379,sentinel2:26379,sentinel3:26379
+----
+
+For more details on Redis Sentinel configuration, see the xref:sentinel.adoc[Redis Sentinel Support] page.
+
+== Microsoft Entra ID Configuration
+
+Redis OM Spring supports Microsoft Entra ID (formerly Azure AD) authentication for both Redis and Azure OpenAI:
+
+[source,yaml]
+----
+# Shared Entra ID settings
+azure:
+  entra-id:
+    enabled: true
+    client-id: ${AZURE_CLIENT_ID}
+    tenant-id: ${AZURE_TENANT_ID}
+    client-secret: ${AZURE_CLIENT_SECRET}
+
+# Redis configuration with Entra ID
+spring:
+  data:
+    redis:
+      host: your-redis-host.redis.cache.windows.net
+      port: 6380
+      ssl: true
+      entra-id: true  # Enable Entra ID auth for Redis
+
+# Redis OM configuration with Entra ID
+redis:
+  om:
+    ai:
+      embedding-provider: azure-openai
+      embedding-model: text-embedding-ada-002
+      azure-resource-name: your-azure-resource
+      azure-deployment-id: your-deployment-id
+      azure-api-version: 2023-05-15
+      entra-id: true  # Use the shared Entra ID settings
+----
+
+== Environment-Specific Configuration
+
+You can use Spring Boot's profiles to provide environment-specific configuration:
+
+[source,yaml]
+----
+# application.yml
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+---
+# Development profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+---
+# Production profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  data:
+    redis:
+      host: prod-redis.example.com
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl: true
+----
+
+== Testing Configuration
+
+For testing, you can use TestContainers to provide a Redis Stack instance:
+
+[source,java]
+----
+@SpringBootTest
+@Testcontainers
+public class YourTest {
+    @Container
+    private static final GenericContainer<?> redisContainer = new GenericContainer<>("redis/redis-stack:latest")
+        .withExposedPorts(6379);
+    
+    @DynamicPropertySource
+    static void redisProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", redisContainer::getHost);
+        registry.add("spring.data.redis.port", redisContainer::getFirstMappedPort);
+    }
+    
+    // Your tests
+}
+----
+
+For more comprehensive testing guidance, see the xref:testing.adoc[Testing Redis OM Applications] page.

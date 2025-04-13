@@ -1,11 +1,67 @@
 = Redis OM Spring
+:page-layout: home
+:!sectids:
 
-Brian Sam-Bodden
+[.lead]
+Redis OM Spring extends Spring Data Redis to provide a comprehensive object mapping and repository solution for Redis Stack, Redis Enterprise, and Redis Cloud.
 
-:doctype: book
+== What is Redis OM Spring?
 
-[[abstract]]
-Spring Session provides an API and implementations for managing a user's session information.
+Redis OM Spring offers Java developers a familiar Spring-based approach to store, index, query, and manage objects in Redis, taking full advantage of advanced Redis capabilities like:
 
-[[introduction]]
-THis is something else, isn't it?
+* Redis JSON for document storage
+* RediSearch for secondary indexing and full-text search
+* Vector similarity search for AI applications
+* Probabilistic data structures
+
+[.cards]
+=== Explore Redis OM Spring
+
+[.card]
+.Getting Started
+[link=/redis-om-spring/current/setup.html]
+--
+Set up your project and start working with Redis OM Spring.
+--
+
+[.card]
+.Quickstart Example
+[link=/redis-om-spring/current/quickstart.html]
+--
+See Redis OM Spring in action with a complete example.
+--
+
+[.card]
+.Documentation
+[link=/redis-om-spring/current/overview.html]
+--
+Browse the complete documentation for Redis OM Spring.
+--
+
+[.card]
+.AI and Vector Search
+[link=/redis-om-spring/current/ai-overview.html]
+--
+Learn about AI integration and vector similarity search.
+--
+
+== Features
+
+Redis OM Spring offers powerful features for working with Redis:
+
+* *Document & Hash Mapping* - Map Java objects to Redis JSON documents or Redis Hashes
+* *Repository Pattern* - Use Spring Data repositories for type-safe data access
+* *Powerful Queries* - Search, filter, and sort your data with ease
+* *Entity Streams* - Fluent API for querying and aggregating data
+* *Vector Search* - Implement semantic search and AI-powered applications
+* *Autocomplete* - Add autocomplete capabilities to your applications
+* *Probabilistic Data Structures* - Work with Bloom filters, Cuckoo filters, and more
+
+== Example Projects
+
+Check out these example projects to see Redis OM Spring in action:
+
+* *roms-documents* - Document repositories demo
+* *roms-hashes* - Enhanced hash repositories demo
+* *roms-vss* - Vector similarity search demo
+* *roms-vss-movies* - Movie recommendation with vector search demo

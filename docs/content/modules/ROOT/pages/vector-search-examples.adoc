@@ -1,0 +1,236 @@
+= Vector Search Examples
+:page-toclevels: 3
+:page-pagination:
+
+This page provides practical examples of vector similarity search using Redis OM Spring, based on the demo applications included in the repository.
+
+== Introduction to Vector Search Examples
+
+Redis OM Spring includes several demo applications that showcase vector similarity search functionality. These demos provide working examples of how to implement and use vector search in your own applications.
+
+== Product Catalog Search Example
+
+The `roms-vss` demo demonstrates a product catalog search application using vector similarity search.
+
+=== Overview
+
+This demo shows how to:
+
+1. Store product information with vector embeddings
+2. Search for similar products based on text descriptions
+3. Visualize search results in a web interface
+
+=== Key Components
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @Searchable
+    private String name;
+    
+    @Searchable
+    private String description;
+    
+    @Vectorize(from = {"name", "description"}, dimensions = 1536)
+    @VectorIndexed(
+        dimensions = 1536,
+        distanceMetric = DistanceMetric.COSINE
+    )
+    private float[] embedding;
+    
+    // Additional fields and methods
+}
+----
+
+=== Vector Search Implementation
+
+[source,java]
+----
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+    @Autowired
+    private ProductRepository repository;
+    
+    @Autowired
+    private EntityStream entityStream;
+    
+    @GetMapping("/search")
+    public List<Product> searchProducts(@RequestParam String query) {
+        // Generate embedding for the query
+        float[] queryEmbedding = embedder.embed(query);
+        
+        // Perform KNN search
+        return entityStream
+            .of(Product.class)
+            .knn(Product$.EMBEDDING, queryEmbedding, 9)
+            .collect(Collectors.toList());
+    }
+}
+----
+
+== Movie Recommendation Example
+
+The `roms-vss-movies` demo showcases a movie recommendation system using vector similarity search.
+
+=== Overview
+
+This demo demonstrates how to:
+
+1. Import a movie dataset with titles, descriptions, and genres
+2. Generate vector embeddings for movie content
+3. Find similar movies based on content semantics
+4. Implement a REST API for movie recommendations
+
+=== Key Components
+
+[source,java]
+----
+@Document
+public class Movie {
+    @Id
+    private String id;
+    
+    @Searchable
+    private String title;
+    
+    @Searchable
+    private String overview;
+    
+    @Indexed
+    private Set<String> genres;
+    
+    @Vectorize(from = {"title", "overview"}, dimensions = 1536)
+    @VectorIndexed(
+        dimensions = 1536,
+        distanceMetric = DistanceMetric.COSINE
+    )
+    private float[] embedding;
+    
+    // Additional fields and methods
+}
+----
+
+=== Search Service Implementation
+
+[source,java]
+----
+@Service
+public class SearchService {
+    @Autowired
+    private MovieRepository repository;
+    
+    @Autowired
+    private EntityStream entityStream;
+    
+    @Autowired
+    private Embedder embedder;
+    
+    public List<Movie> findSimilarMovies(String movieId, int limit) {
+        // Get the reference movie
+        Movie movie = repository.findById(movieId)
+            .orElseThrow(() -> new RuntimeException("Movie not found"));
+        
+        // Get movies similar to the reference movie
+        return entityStream
+            .of(Movie.class)
+            .filter(Movie$.ID.ne(movieId))  // Exclude the reference movie
+            .knn(Movie$.EMBEDDING, movie.getEmbedding(), limit)
+            .collect(Collectors.toList());
+    }
+    
+    public List<Movie> searchMoviesByText(String query, int limit) {
+        // Generate embedding for the query
+        float[] queryEmbedding = embedder.embed(query);
+        
+        // Search for movies similar to the query
+        return entityStream
+            .of(Movie.class)
+            .knn(Movie$.EMBEDDING, queryEmbedding, limit)
+            .collect(Collectors.toList());
+    }
+}
+----
+
+== Hybrid Search Example
+
+One of the powerful features of vector search in Redis OM Spring is the ability to combine vector similarity with traditional filtering, known as hybrid search.
+
+=== Implementation
+
+[source,java]
+----
+// Find action movies similar to a query
+public List<Movie> findActionMoviesSimilarToQuery(String query, int limit) {
+    float[] queryEmbedding = embedder.embed(query);
+    
+    return entityStream
+        .of(Movie.class)
+        .filter(Movie$.GENRES.contains("Action"))
+        .knn(Movie$.EMBEDDING, queryEmbedding, limit)
+        .collect(Collectors.toList());
+}
+
+// Find recent movies similar to a reference movie
+public List<Movie> findRecentSimilarMovies(Movie referenceMovie, int year, int limit) {
+    return entityStream
+        .of(Movie.class)
+        .filter(Movie$.RELEASE_YEAR.gte(year))
+        .filter(Movie$.ID.ne(referenceMovie.getId()))
+        .knn(Movie$.EMBEDDING, referenceMovie.getEmbedding(), limit)
+        .collect(Collectors.toList());
+}
+----
+
+== Running the Examples
+
+To run the vector search demos:
+
+=== Product Catalog Example (roms-vss)
+
+1. Navigate to the `demos/roms-vss` directory
+2. Start Redis Stack using the included compose file: `docker-compose up -d`
+3. Build and run the application:
+   ```bash
+   ../mvnw spring-boot:run
+   ```
+4. Access the application at http://localhost:8080
+
+=== Movie Recommendation Example (roms-vss-movies)
+
+1. Navigate to the `demos/roms-vss-movies` directory
+2. Start Redis Stack using the included compose file: `docker-compose up -d`
+3. Build and run the application:
+   ```bash
+   ../mvnw spring-boot:run
+   ```
+4. Use the REST API to search for movies:
+   ```bash
+   curl "http://localhost:8080/api/search?query=space%20adventure&limit=5"
+   ```
+
+== Best Practices
+
+When implementing vector search in your applications, consider these best practices:
+
+1. **Choose appropriate dimensions**: Higher dimensions capture more information but use more memory
+2. **Select the right distance metric**: Use COSINE for text, L2 for images, IP for normalized vectors
+3. **Combine with traditional filters**: Use hybrid search for better precision
+4. **Consider performance**: Adjust HNSW parameters (m, efConstruction, efRuntime) based on your needs
+5. **Cache embeddings**: Generate embeddings only when source fields change
+
+== Learning from the Examples
+
+These examples provide several patterns you can apply in your own applications:
+
+1. **Content-based recommendations**: Find similar items based on content features
+2. **Semantic search**: Search by meaning rather than keywords
+3. **Personalization**: Find items similar to a user's preferences
+4. **Hybrid filtering**: Combine vector search with traditional filters
+5. **REST API design**: Expose vector search capabilities through clean APIs
+
+By studying and extending these examples, you can implement powerful AI-driven search and recommendation features in your own applications.

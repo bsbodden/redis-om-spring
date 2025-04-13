@@ -15,7 +15,7 @@ runtime:
 
 ui:
   bundle:
-    url: https://github.com/redis-developer/antora-ui-redis/releases/latest/download/ui-bundle.zip
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
     snapshot: true
   supplemental_files: ./supplemental-ui
 
@@ -27,8 +27,3 @@ asciidoc:
     page-pagination: ''
     toc: ~
     xrefstyle: short
-
-antora:
-  extensions:
-    - require: '@antora/lunr-extension'
-      index_latest_only: true
