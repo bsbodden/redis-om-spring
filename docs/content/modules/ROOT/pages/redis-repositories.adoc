@@ -9,15 +9,15 @@ based on the capabilities of the underlying data store. In Spring Data Redis, th
 Spring builds upon the repositories are based on the https://docs.spring.io/spring-data/keyvalue/docs/current/api/org/springframework/data/keyvalue/repository/KeyValueRepository.html[`KeyValueRepository`].
 
 To support simple property searches, Spring Data Redis uses redis data structures to create secondary indices. This is
-no longer necessary when using Redis OM Spring which relies on Redis Stack search engine to create proper search indices.
+no longer necessary when using Redis OM Spring which relies on Redis Stack's Query Engine to create proper search indices. As of Redis 8, the Query Engine is a standard component of Redis.
 
 Redis OM Spring supports two different types of repositories:
 
 * **Hash Repositories**: "Enhanced" Hash Repositories via `RedisEnhancedRepository` extends `KeyValueRepository` to back all search-related
-repository operations with RediSearch queries and aggregations.
+repository operations with Redis Query Engine (formerly RediSearch) queries and aggregations.
 
 * **Document Repositories**: Document ("JSON") Repositories via `RedisDocumentRepository` extends  `KeyValueRepository` to back all search-related
-repository operations with RediSearch queries and aggregations.
+repository operations with Redis Query Engine queries and aggregations.
 
 == Setup
 

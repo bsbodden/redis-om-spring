@@ -14,14 +14,14 @@ Before you begin, make sure you have:
 
 == Setting Up Redis Stack
 
-Redis OM Spring relies on the search, query, and JSON capabilities of Redis Stack. The quickest way to get started is with Docker:
+Redis OM Spring leverages the Redis Query Engine and JSON capabilities, which are standard in Redis 8 and above. The quickest way to get started is with Docker:
 
 [source,bash]
 ----
 docker run -p 6379:6379 -p 8001:8001 redis/redis-stack
 ----
 
-This launches Redis Stack with RediSearch and RedisJSON modules, as well as RedisInsight GUI accessible at http://localhost:8001.
+This launches Redis Stack with Redis Query Engine (formerly RediSearch) and JSON modules, as well as RedisInsight GUI accessible at http://localhost:8001. As of Redis 8, these modules are standard components of Redis.
 
 Alternatively, use the provided Docker Compose file:
 
@@ -447,9 +447,9 @@ private EntityStream entityStream;
 public List<Product> findExpensiveElectronics(double minPrice) {
     return entityStream
         .of(Product.class)
-        .filter(Product$.CATEGORIES.contains("electronics"))
-        .filter(Product$.PRICE.gte(minPrice))
-        .sorted(Product$.PRICE, SortOrder.DESC)
+        .filter(Product$.CATEGORIES.in("electronics"))
+        .filter(Product$.PRICE.gt(minPrice))
+        .sorted(Product$.PRICE.desc())
         .collect(Collectors.toList());
 }
 ----

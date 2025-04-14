@@ -1,0 +1,189 @@
+= Enhanced Redis Hashes
+:page-toclevels: 3
+:experimental:
+:source-highlighter: highlight.js
+
+== Introduction to Enhanced Redis Hashes
+
+Redis OM Spring extends the capabilities of Spring Data Redis's basic hash mapping with enhanced features that provide more powerful querying, indexing, and search capabilities.
+
+Spring Data Redis provides basic features:
+- Simple key-value mapping
+- Basic CRUD operations
+- Template-based access
+
+Redis OM Spring adds enhanced features:
+- Secondary indexing
+- Full-text search
+- Query methods
+- Entity streams
+
+== Getting Started with Enhanced Hashes
+
+=== Basic Configuration
+
+First, enable Redis OM Spring repositories in your application:
+
+[source,java]
+----
+@SpringBootApplication
+@EnableRedisEnhancedRepositories
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+----
+
+=== Entity Definition
+
+Create your entity class using the standard Spring Data Redis `@RedisHash` annotation:
+
+[source,java]
+----
+@RedisHash
+public class User {
+    @Id
+    private String id;
+    
+    @Indexed
+    private String username;
+    
+    @Indexed
+    private String email;
+    
+    private String firstName;
+    private String lastName;
+    
+    // Getters and setters
+}
+----
+
+=== Repository Definition
+
+Define a repository interface that extends `RedisEnhancedRepository`:
+
+[source,java]
+----
+public interface UserRepository extends RedisEnhancedRepository<User, String> {
+    List<User> findByUsername(String username);
+    List<User> findByEmail(String email);
+}
+----
+
+== Enhanced Features
+
+=== Secondary Indexing
+
+Redis OM Spring allows you to index fields using the `@Indexed` annotation:
+
+[source,java]
+----
+@RedisHash
+public class Product {
+    @Id
+    private String id;
+    
+    @Indexed
+    private String sku;
+    
+    @Indexed
+    private String category;
+    
+    private String name;
+    private double price;
+    
+    // Getters and setters
+}
+----
+
+This creates secondary indices that enable faster lookups by these fields.
+
+=== Query Methods
+
+Enhanced repositories support Spring Data query methods with richer semantics than basic Redis repositories:
+
+[source,java]
+----
+public interface ProductRepository extends RedisEnhancedRepository<Product, String> {
+    List<Product> findByCategory(String category);
+    List<Product> findBySku(String sku);
+    List<Product> findByPriceGreaterThan(double price);
+    List<Product> findByCategoryOrderByPriceAsc(String category);
+}
+----
+
+When you call a method like `findByCategory("electronics")`, the repository:
+1. Accesses the index in Redis
+2. Gets matching IDs
+3. Fetches the products by those IDs
+4. Returns the product data as a List<Product>
+
+=== Entity Streams
+
+Enhanced repositories provide Entity Stream support for complex queries and operations:
+
+[source,java]
+----
+@Service
+public class ProductService {
+    private final ProductRepository repository;
+    
+    public ProductService(ProductRepository repository) {
+        this.repository = repository;
+    }
+    
+    public List<Product> getExpensiveElectronics(double priceThreshold) {
+        return repository.findAll()
+            .filter(product -> "electronics".equals(product.getCategory()))
+            .filter(product -> product.getPrice() > priceThreshold)
+            .sorted(Comparator.comparing(Product::getPrice).reversed())
+            .collect(Collectors.toList());
+    }
+}
+----
+
+== Comparison with Basic Redis Hash Mapping
+
+[cols="1,2,2"]
+|===
+|Feature |Basic Redis Hash |Enhanced Redis Hash
+
+|Query Capabilities
+|Limited, mostly by ID
+|Rich query methods, filtering
+
+|Secondary Indices
+|Not available
+|Supported via @Indexed
+
+|Search Integration
+|Not available
+|Redis Query Engine integration available
+
+|Entity Streams
+|Not available
+|Fully supported
+
+|Compatibility
+|Standard Spring Data Redis
+|Extends Spring Data Redis
+
+|Repository API
+|CrudRepository
+|RedisEnhancedRepository
+|===
+
+== Best Practices
+
+* Use enhanced repositories when you need more sophisticated querying capabilities
+* Index only the fields that you'll query frequently
+* Consider using JSON documents for complex nested structures
+* Balance between indexing needs and memory consumption
+* Follow standard Spring Data naming conventions for query methods
+
+== Next Steps
+
+* xref:hash-repositories.adoc[Working with Hash Repositories]
+* xref:entity-streams.adoc[Entity Streams]
+* xref:json_mappings.adoc[Redis JSON Mappings]

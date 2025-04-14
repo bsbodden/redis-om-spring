@@ -3,7 +3,7 @@
 
 Spring Data Redis (SDR), the library that Redis OM Spring extends, provides mapping of Spring Entities to Redis Hashes. To learn more about Hash Mappings consult the https://docs.spring.io/spring-data/redis/docs/current/reference/html/#redis.repositories[official docs].
 
-Redis OM Spring extends SDR Hash Mapping scheme to take advantage of the https://redis.io/docs/interact/search-and-query/[Redis Search Engine] available in Redis Stack.
+Redis OM Spring extends SDR Hash Mapping scheme to take advantage of the https://redis.io/docs/interact/search-and-query/[Redis Query Engine] available as a standard component in Redis 8 or via Redis Stack for older versions.
 
 == Usage
 
@@ -113,7 +113,7 @@ public void basicCrudOperations() {
 <4> Removes the key for the given object from Redis.
 ====
 
-include::../{spring-data-commons-docs}/object-mapping.adoc[leveloffset=+1]
+// Object-to-Hash mapping is described in detail below
 
 [[redis.repositories.mapping]]
 == Object-to-Hash Mapping
@@ -585,8 +585,7 @@ The finder methods allow usage of `Circle` or `Point, Distance` combinations for
 
 NOTE: It is **not** possible to combine `near` and `within` with other criteria.
 
-include::../{spring-data-commons-docs}/query-by-example.adoc[leveloffset=+1]
-include::query-by-example.adoc[leveloffset=+1]
+For details on Query by Example (QBE), see the xref:qbe.adoc[Query By Example] section.
 
 [[redis.repositories.expirations]]
 == Time To Live
@@ -636,7 +635,7 @@ Expiry events are received on all connected applications that use Spring Data Re
 
 By default, the key expiry listener is disabled when initializing the application.
 The startup mode can be adjusted in `@EnableRedisRepositories` or `RedisKeyValueAdapter` to start the listener with the application or upon the first insert of an entity with a TTL.
-See https://docs.spring.io/spring-data/redis/docs/{revnumber}/api/org/springframework/data/redis/core/RedisKeyValueAdapter.EnableKeyspaceEvents.html[`EnableKeyspaceEvents`] for possible values.
+See the Spring Data Redis documentation for `EnableKeyspaceEvents` for possible values.
 
 The `RedisKeyExpiredEvent` holds a copy of the expired domain object as well as the key.
 
@@ -650,10 +649,9 @@ Note that `CONFIG` is disabled on AWS ElastiCache, and enabling the listener lea
 To work around this behavior, set the `keyspaceNotificationsConfigParameter` parameter to an empty string.
 This prevents `CONFIG` command usage.
 
-NOTE: Redis Pub/Sub messages are not persistent.
-If a key expires while the application is down, the expiry event is not processed, which may lead to secondary indexes containing references to the expired object.
+NOTE: Redis Pub/Sub messages are not persistent. If a key expires while the application is down, the expiry event is not processed, which may lead to secondary indexes containing references to the expired object.
 
-NOTE: `@EnableKeyspaceEvents(shadowCopy = OFF)` disable storage of phantom copies and reduces data size within Redis. `RedisKeyExpiredEvent` will only contain the `id` of the expired key.
+NOTE: `@EnableKeyspaceEvents(shadowCopy = OFF)` disables storage of phantom copies and reduces data size within Redis. `RedisKeyExpiredEvent` will only contain the `id` of the expired key.
 
 [[redis.repositories.references]]
 == Persisting References

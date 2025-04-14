@@ -1,11 +1,11 @@
 [[setup]]
 = Setup and Configuration
 
-Redis OM Spring is designed to work with the Redis Stack compatible distribution providing the following extended Redis capabilities:
+Redis OM Spring is designed to work with Redis 8 and above, which includes the Query Engine and JSON modules as standard components, or with the Redis Stack distribution which provides extended capabilities:
 
-* **Search**: The enhanced Redis experience with Redis Stack provides querying capabilities, secondary indexing, full-text search, vector similarity search, and more. See https://redis.io/docs/interact/search-and-query/
-* **JSON**: The JSON capability of Redis Stack provides JavaScript Object Notation (JSON) support for Redis. It lets you store, update, and retrieve JSON values in a Redis database, similar to any other Redis data type. Redis JSON also works seamlessly with Search and Query to let you index and query JSON documents. See https://redis.io/docs/data-types/json/
-* **Probabilistic**: probabilistic data structures to Redis, including Bloom filter, Cuckoo filter, Count-min sketch, Top-K, and t-digest. Using this capability, you can query streaming data without needing to store all the elements of the stream. See https://redis.io/docs/data-types/probabilistic/
+* **Redis Query Engine**: As of Redis 8, the Query Engine (formerly known as RediSearch) is a standard component providing querying capabilities, secondary indexing, full-text search, vector similarity search, and more. See https://redis.io/docs/interact/search-and-query/
+* **JSON**: As of Redis 8, the JSON module is a standard component that provides JavaScript Object Notation (JSON) support for Redis. It lets you store, update, and retrieve JSON values in a Redis database, similar to any other Redis data type. Redis JSON works seamlessly with the Query Engine to let you index and query JSON documents. See https://redis.io/docs/data-types/json/
+* **Probabilistic**: Redis Stack adds probabilistic data structures to Redis, including Bloom filter, Cuckoo filter, Count-min sketch, Top-K, and t-digest. Using this capability, you can query streaming data without needing to store all the elements of the stream. See https://redis.io/docs/data-types/probabilistic/
 
 == Requirements
 
@@ -89,7 +89,7 @@ inherited from the parent poms):
       <path>
         <groupId>com.redis.om</groupId>
         <artifactId>redis-om-spring</artifactId>
-        <version>0.8.7-SNAPSHOT</version>
+        <version>0.9.12-SNAPSHOT</version>
       </path>
     </annotationProcessorPaths>
   </configuration>
@@ -128,7 +128,7 @@ Similarly, for Gradle add:
 [source,groovy]
 ----
 ext {
-  redisOmVersion = '0.8.7-SNAPSHOT'
+  redisOmVersion = '0.9.12-SNAPSHOT'
 }
 
 dependencies {

@@ -8,7 +8,7 @@ Redis OM Spring offers seamless integration with AI capabilities, primarily thro
 
 Vector Similarity Search (VSS) is a technique that allows searching for items based on how similar they are in a multi-dimensional space. Unlike traditional exact-match searches, VSS finds items that are conceptually or semantically similar.
 
-Redis Stack implements vector search through RediSearch, which provides high-performance vector indexing and search capabilities. Redis OM Spring makes these capabilities easily accessible through familiar Spring patterns.
+Redis Stack implements vector search through the Redis Query Engine (formerly RediSearch), which provides high-performance vector indexing and search capabilities. As of Redis 8, the Query Engine is a standard component of Redis. Redis OM Spring makes these capabilities easily accessible through familiar Spring patterns.
 
 == Key AI Features in Redis OM Spring
 
@@ -23,44 +23,15 @@ Redis OM Spring provides several key features for AI integration:
 
 == Architecture Overview
 
-.Redis OM Spring AI Integration Architecture
-[plantuml,ai-architecture,svg]
-----
-@startuml
-package "Application" {
-  [Domain Objects] as DO
-  [Repositories] as REPO
-}
+The architecture of Redis OM Spring's AI integration consists of:
 
-package "Redis OM Spring" {
-  [Vector Search API] as VSA
-  [Embedding Generation] as EG
-  [Index Management] as IM
-}
-
-package "Spring AI" {
-  [Embedding Models] as EM
-}
-
-cloud "Azure OpenAI" {
-  [Embedding Service] as ES
-}
-
-package "Redis Stack" {
-  [RediSearch] as RS
-  [RedisJSON] as RJ
-}
-
-DO --> REPO : uses
-REPO --> VSA : uses
-VSA --> IM : manages
-EG --> EM : uses
-EM --> ES : may use
-IM --> RS : creates/manages indices
-VSA --> RS : executes searches
-DO --> RJ : stored as
-@enduml
-----
+1. **Domain Objects** are annotated with `@Document` and `@Vectorize` to enable vector search capabilities
+2. **Repositories** provide an interface to search these objects
+3. **Vector Search API** handles vector similarity queries
+4. **Embedding Generation** converts text or images to vector embeddings using various providers
+5. **Index Management** creates and manages vector indices using either HNSW (hierarchical navigable small world) or FLAT algorithms
+6. **RediSearch** executes the searches within Redis
+7. **RedisJSON** stores the domain objects and their vector representations
 
 == Using AI Features
 

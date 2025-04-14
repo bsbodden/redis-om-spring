@@ -26,7 +26,7 @@ Redis OM Spring offers the following key capabilities:
 === Enhanced Redis Hash Support
 
 * Enhanced SDR's `@RedisHash` via `@EnableRedisEnhancedRepositories`
-* Native RediSearch integration for secondary indexing
+* Native Redis Query Engine integration for secondary indexing
 * Uses [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
 
 === Powerful Repository Abstractions

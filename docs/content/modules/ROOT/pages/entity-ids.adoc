@@ -1,0 +1,146 @@
+= Entity IDs and ULID
+:page-toclevels: 3
+:experimental:
+:source-highlighter: highlight.js
+
+== Introduction to Entity IDs
+
+Every entity stored in Redis requires a unique identifier. Redis OM Spring provides flexible options for generating and managing these identifiers.
+
+== ID Fields
+
+=== The @Id Annotation
+
+Use the `@Id` annotation to designate a field as the entity's identifier:
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    // Other fields
+}
+----
+
+=== ID Data Types
+
+Redis OM Spring supports various ID field types:
+
+* `String` - Most common, supports both manually assigned and generated IDs
+* `Long` - Numeric IDs
+* Custom types - With appropriate converters
+
+== ID Generation
+
+=== ULID: Default ID Generation
+
+Redis OM Spring uses ULID (Universally Unique Lexicographically Sortable Identifier) by default:
+
+[source,java]
+----
+@Document
+public class Customer {
+    @Id
+    private String id;  // Automatically assigned a ULID if null
+    // Other fields
+}
+----
+
+=== Benefits of ULID
+
+ULIDs offer several advantages:
+
+* Sortable by creation time (lexicographically)
+* High probability of uniqueness
+* Compact string representation (26 characters)
+* Timestamp encoded in the ID
+* No coordination needed between servers
+
+=== ULID Format
+
+A ULID consists of:
+
+* Timestamp component (48 bits) - milliseconds since the epoch
+* Randomness component (80 bits) - cryptographically secure random values
+
+Example: `01ARZ3NDEKTSV4RRFFQ69G5FAV`
+
+== Custom ID Generation
+
+=== Providing Your Own IDs
+
+You can assign IDs explicitly:
+
+[source,java]
+----
+Product product = new Product();
+product.setId("product-1001");
+productRepository.save(product);
+----
+
+=== Custom ID Generators
+
+For specific requirements, you can implement custom ID generation:
+
+[source,java]
+----
+@Component
+public class CustomIdGenerator {
+    public String generate() {
+        return "PREFIX-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString();
+    }
+}
+
+@Service
+public class ProductService {
+    @Autowired
+    private CustomIdGenerator idGenerator;
+    
+    @Autowired
+    private ProductRepository repository;
+    
+    public Product createProduct(String name, double price) {
+        Product product = new Product();
+        product.setId(idGenerator.generate());
+        product.setName(name);
+        product.setPrice(price);
+        return repository.save(product);
+    }
+}
+----
+
+== ID as HashTag
+
+=== @IdAsHashTag Annotation
+
+For Redis Cluster deployments, the `@IdAsHashTag` annotation ensures that entities are stored in the same hash slot:
+
+[source,java]
+----
+@Document
+@IdAsHashTag
+public class Order {
+    @Id
+    private String id;
+    private String customerId;
+    private List<OrderItem> items;
+    // Other fields
+}
+----
+
+This ensures that operations on related entities can be executed in atomic transactions.
+
+== Best Practices
+
+* Let Redis OM Spring generate IDs when possible
+* Use descriptive prefixes for manually assigned IDs
+* Consider using `@IdAsHashTag` for clustered Redis deployments
+* Make IDs immutable after creation
+* Avoid exposing internal IDs in public APIs if possible
+
+== Next Steps
+
+* xref:hash-mappings.adoc[Redis Hash Mapping]
+* xref:json_mappings.adoc[Redis JSON Mapping]
+* xref:keyspaces.adoc[Working with Keyspaces]

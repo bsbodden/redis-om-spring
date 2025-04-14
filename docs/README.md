@@ -7,9 +7,16 @@ Documentation site for Redis OM Spring, based on [Antora](https://antora.org/).
 ### Prerequisites
 
 - Node.js 16+
-- npm or yarn
+- npm
+- Java 17+ (if using Maven)
 
 ### Installation
+
+./mvnw compile -pl docs
+
+npx antora -v
+
+npx antora antora-playbook.yml
 
 ```bash
 npm install
@@ -17,19 +24,29 @@ npm install
 
 ### Building the Site
 
+#### Using npm
+
 ```bash
-npm run build
+npm run build -- --to-dir=target/site
 ```
 
-The documentation will be built in the `build/site` directory.
+The documentation will be built in the `target/site` directory (same location as the Maven build).
+
+#### Using Maven
+
+You can also build the site using Maven:
+
+```bash
+mvn clean compile
+```
 
 ### Viewing the Documentation
 
 After building, you can view the documentation by opening any of these files in your browser:
 
-- `build/site/index.html` - Documentation homepage
-- `build/site/redis-om-spring/current/index.html` - Current version documentation
-- `build/site/redis-om-spring/current/overview.html` - Overview page
+- `target/site/index.html` - Documentation homepage
+- `target/site/redis-om-spring/current/index.html` - Current version documentation
+- `target/site/redis-om-spring/current/overview.html` - Overview page
 
 ## Content Structure
 
@@ -47,13 +64,21 @@ The documentation content is organized as follows:
 
 ### Docker Setup
 
-You can also serve the documentation using Docker:
+You can also serve the documentation using Docker after building:
 
 ```bash
+# First build the site
+npm run build
+# or 
+mvn clean compile
+
+# Then serve with Docker
 docker-compose up
 ```
 
 The documentation will be available at http://localhost:8000.
+
+Note: The Docker setup uses the `target/site` directory, so make sure you've built the documentation first.
 
 ### Adding New Content
 
@@ -94,3 +119,13 @@ To add a new page:
 - Standardize page structure and formatting
 - Add navigation breadcrumbs
 - Integrate automated API documentation
+
+## Troubleshooting
+
+If you encounter any issues:
+
+1. Make sure you have the correct Node.js version (16+)
+2. Clear the cache with `rm -rf .cache/`
+3. For Maven builds, run `mvn clean` first
+4. Ensure the output directory exists before serving with Docker
+5. Check the antora-playbook.yml for site configuration settings

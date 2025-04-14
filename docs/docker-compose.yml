@@ -1,6 +1,6 @@
 services:
     client:
-        image: nginx
+        image: nginxThe
         ports:
             - 8000:80
         volumes:

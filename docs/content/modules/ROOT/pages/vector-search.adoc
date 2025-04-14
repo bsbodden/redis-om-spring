@@ -27,9 +27,16 @@ Vector search works by:
 
 "Closeness" is measured using various distance metrics like Euclidean distance, Cosine similarity, or Dot product.
 
+Vector search consists of two main phases:
+
+1. **Indexing Phase**: Data is processed into vector embeddings and stored in Redis
+2. **Query Phase**: A user query is converted to a vector and compared against stored vectors to find similar items
+
 == Vector Search in Redis Stack
 
-Redis Stack implements vector search through the RediSearch module, which provides:
+As of Redis 8, the Query Engine is a standard component of Redis, making these features available without requiring separate module installation.
+
+Redis Stack implements vector search through the Redis Query Engine (formerly RediSearch module), which provides:
 
 * Efficient storage of vector data
 * Fast vector indexing using algorithms like HNSW (Hierarchical Navigable Small World)
@@ -236,7 +243,7 @@ public class ProductService {
 
 == Distance Metrics
 
-Redis OM Spring supports three distance metrics for vector similarity:
+Redis OM Spring supports three main distance metrics for vector similarity:
 
 === Cosine Similarity (COSINE)
 
@@ -249,6 +256,12 @@ Measures the straight-line distance between two points in the vector space. Lowe
 === Inner Product (IP)
 
 The dot product of two vectors. Higher values indicate more similarity. This is useful when vectors are normalized and can be faster to compute than cosine similarity.
+
+**When to use each metric:**
+
+* **COSINE**: Best for text embeddings and when vector magnitudes vary
+* **L2**: Better for image embeddings and when distances in the space are meaningful
+* **IP**: Fastest option when vectors are normalized
 
 == Vector Index Algorithms
 

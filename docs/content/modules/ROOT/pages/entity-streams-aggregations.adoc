@@ -1,6 +1,6 @@
 = EntityStreams Aggregations
 
-The EntityStreams API provides aggregations support through RediSearch. Aggregations can be performed on entities by piping them through various aggregation stages.
+The EntityStreams API provides aggregations support through the Redis Query Engine (formerly RediSearch). Aggregations can be performed on entities by piping them through various aggregation stages. As of Redis 8, the Query Engine is a standard component of Redis.
 
 == Aggregation Stages
 

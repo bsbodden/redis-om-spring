@@ -23,7 +23,7 @@
 * xref:json-repositories.adoc[Document Repositories]
 
 .Indexing and Search
-* xref:search.adoc[RediSearch Integration]
+* xref:search.adoc[Redis Query Engine Integration]
 * xref:index-annotations.adoc[Index Annotations]
 * xref:index-creation.adoc[Index Creation and Management]
 * xref:multilanguage.adoc[Multilanguage Support]
@@ -31,19 +31,14 @@
 .Query Capabilities
 * xref:repository-queries.adoc[Repository Query Methods]
 * xref:query-annotation.adoc[Query Annotation]
-* xref:complex-queries.adoc[Complex Queries]
 * xref:qbe.adoc[Query By Example]
 
 .Entity Streams
 * xref:entity-streams.adoc[Entity Stream Basics]
-* xref:filtering.adoc[Filtering and Transformation]
-* xref:sorting.adoc[Sorting and Pagination]
 * xref:metamodel.adoc[Metamodel-Based Queries]
 
 .Aggregations
 * xref:entity-streams-aggregations.adoc[Aggregation Capabilities]
-* xref:aggregation-annotation.adoc[Aggregation Annotation]
-* xref:reducers.adoc[Reducers and Apply Functions]
 
 .AI and Vector Search
 * xref:ai-overview.adoc[AI Integration Overview]
@@ -54,7 +49,6 @@
 
 .Advanced Features
 * xref:autocomplete.adoc[Autocomplete]
-* xref:probabilistic.adoc[Probabilistic Data Structures]
 * xref:bloom-and-cuckoo.adoc[Bloom and Cuckoo Filters]
 * xref:references.adoc[References between Entities]
 * xref:auditing.adoc[Auditing]
@@ -64,17 +58,3 @@
 
 .Enterprise Features
 * xref:sentinel.adoc[Redis Sentinel Support]
-* xref:redis-enterprise.adoc[Redis Enterprise Integration]
-* xref:cloud-deployment.adoc[Cloud Deployment]
-
-.Testing and Development
-* xref:testing.adoc[Testing Redis OM Applications]
-* xref:development-tools.adoc[Development Tools]
-
-.Practical Examples
-* xref:use-cases.adoc[Common Use Cases]
-* xref:demo-applications.adoc[Sample Projects]
-
-.Reference
-* xref:api-reference.adoc[API Reference]
-* xref:faq.adoc[FAQ and Troubleshooting]

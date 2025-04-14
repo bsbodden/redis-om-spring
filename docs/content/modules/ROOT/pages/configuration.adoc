@@ -166,6 +166,20 @@ You can use both annotations together if you need both types of repositories.
 
 == Advanced Configuration
 
+=== Redis 8 Configuration
+
+As of Redis 8, the Query Engine (formerly RediSearch) and JSON modules are standard components of Redis. When using Redis 8, no special configuration is needed to activate these features. When using older Redis versions, ensure that Redis Stack is installed to provide these modules.
+
+[source,yaml]
+----
+spring:
+  data:
+    redis:
+      # Redis 8 automatically includes Query Engine and JSON modules
+      host: localhost
+      port: 6379
+----
+
 === Custom Redis Client
 
 For more advanced Redis configuration, you can define your own Redis client bean:
