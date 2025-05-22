@@ -1,0 +1,251 @@
+= Index Annotations
+:page-toclevels: 3
+:experimental:
+:source-highlighter: highlight.js
+
+== Introduction to Index Annotations
+
+Redis OM Spring provides a comprehensive set of annotations to define how your entity fields should be indexed in Redis Query Engine (formerly RediSearch). As of Redis 8, the Query Engine is a standard component of Redis. This page explains the available annotations and their configuration options.
+
+== Basic Indexing Annotations
+
+=== @Indexed
+
+The simplest form of indexing is the `@Indexed` annotation, which creates a basic index:
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @Indexed
+    private String sku;
+    
+    // Other fields
+}
+----
+
+== Text Field Indexing
+
+=== @TextIndexed
+
+For full-text search on string fields:
+
+[source,java]
+----
+@Document
+public class Article {
+    @Id
+    private String id;
+    
+    @TextIndexed
+    private String title;
+    
+    @TextIndexed(weight = 0.5)
+    private String content;
+    
+    // Other fields
+}
+----
+
+==== Configuration Options:
+
+* `weight` - Relative importance of this field (default: 1.0)
+* `sortable` - Whether the field can be used for sorting (default: false)
+* `nostem` - Disable stemming for this field (default: false)
+* `phonetic` - Enable phonetic matching using Double Metaphone algorithm (default: "")
+
+== Numeric Field Indexing
+
+=== @NumericIndexed
+
+For numeric fields that need to be queried by range:
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @TextIndexed
+    private String name;
+    
+    @NumericIndexed(sortable = true)
+    private double price;
+    
+    @NumericIndexed
+    private int stockQuantity;
+    
+    // Other fields
+}
+----
+
+==== Configuration Options:
+
+* `sortable` - Whether the field can be used for sorting (default: false)
+
+== Tag Field Indexing
+
+=== @TagIndexed
+
+For exact-match queries and faceted search:
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @TagIndexed
+    private String category;
+    
+    @TagIndexed(separator = "|")
+    private List<String> tags;
+    
+    // Other fields
+}
+----
+
+==== Configuration Options:
+
+* `separator` - Character used to separate multiple values (default: ",")
+* `sortable` - Whether the field can be used for sorting (default: false)
+
+== Geospatial Indexing
+
+=== @GeoIndexed
+
+For location-based queries:
+
+[source,java]
+----
+import org.springframework.data.geo.Point;
+
+@Document
+public class Restaurant {
+    @Id
+    private String id;
+    
+    @TextIndexed
+    private String name;
+    
+    @GeoIndexed
+    private Point location;
+    
+    // Other fields
+}
+----
+
+==== Configuration Options:
+
+* `sortable` - Whether the field can be used for sorting (default: false)
+
+== Vector Indexing
+
+=== @VectorIndexed
+
+For AI-powered similarity search:
+
+[source,java]
+----
+@Document
+public class Document {
+    @Id
+    private String id;
+    
+    @TextIndexed
+    private String content;
+    
+    @VectorIndexed(
+        algorithm = VectorAlgorithm.HNSW, 
+        dimensions = 1536, 
+        distanceMetric = DistanceMetric.COSINE
+    )
+    private float[] embedding;
+    
+    // Other fields
+}
+----
+
+==== Configuration Options:
+
+* `algorithm` - Vector index algorithm (FLAT or HNSW)
+* `dimensions` - Number of dimensions in the vector
+* `distanceMetric` - Distance metric (COSINE, IP, or L2)
+* `initialCapacity` - Initial capacity of the index (default: 1000)
+* `blockSize` - Block size for the index (default: 1024)
+* `m` - HNSW parameter for number of connections (default: 16)
+* `efConstruction` - HNSW parameter for build time/accuracy trade-off (default: 200)
+* `efRuntime` - HNSW parameter for query time/accuracy trade-off (default: 10)
+
+== Indexing Collections
+
+=== Arrays and Lists
+
+Redis OM Spring handles indexing of collection fields:
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @TextIndexed
+    private String name;
+    
+    @TagIndexed
+    private List<String> categories;
+    
+    @NumericIndexed
+    private double[] historicalPrices;
+    
+    // Other fields
+}
+----
+
+== Index Configuration
+
+=== @IndexingOptions
+
+Advanced configuration for index creation can be set at the class level:
+
+[source,java]
+----
+@Document
+@IndexingOptions(
+    stopWords = {"a", "an", "the", "in", "on", "at"}, 
+    prefixes = {"product:"},
+    language = "English"
+)
+public class Product {
+    // Fields
+}
+----
+
+==== Configuration Options:
+
+* `stopWords` - List of words to ignore in text indices
+* `prefixes` - Key prefixes to include in the index
+* `language` - Default language for stemming
+* `filter` - Filter expression for the index
+* `maxTextFields` - Whether to index all text fields (default: false)
+* `async` - Enable asynchronous index creation
+
+== Best Practices
+
+* Index only the fields you need to query
+* Use `@TagIndexed` for exact matches and `@TextIndexed` for full-text search
+* Make fields `sortable` only if needed, as it increases memory usage
+* Configure appropriate language settings for text fields
+* Consider performance implications when indexing large collections
+
+== Next Steps
+
+* xref:index-creation.adoc[Index Creation and Management]
+* xref:search.adoc[Redis Query Engine Integration]
+* xref:vector-search.adoc[Vector Similarity Search]

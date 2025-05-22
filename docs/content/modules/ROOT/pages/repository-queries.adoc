@@ -1,0 +1,157 @@
+= Repository Query Methods
+:page-toclevels: 3
+:experimental:
+:source-highlighter: highlight.js
+
+== Introduction to Repository Query Methods
+
+Redis OM Spring provides a powerful query mechanism for repositories that follows the Spring Data method naming conventions while leveraging the capabilities of Redis Query Engine (formerly RediSearch). As of Redis 8, the Query Engine is a standard component of Redis.
+
+== Query Method Naming Conventions
+
+=== Basic Structure
+
+Query methods follow a pattern:
+
+[source]
+----
+find[Distinct][Top/First<N>]By<Property>[Operator][And/Or<Property>[Operator]]
+----
+
+Where:
+* `find` - The basic query verb
+* `Distinct` - Optional, for distinct results
+* `Top/First<N>` - Optional, for limiting results
+* `<Property>` - The field name to query
+* `[Operator]` - Optional, the type of comparison
+* `And/Or` - Optional, for composing multiple conditions
+
+=== Example Repository Interface
+
+[source,java]
+----
+@Repository
+public interface ProductRepository extends RedisDocumentRepository<Product, String> {
+    // Find all products with the exact name
+    List<Product> findByName(String name);
+    
+    // Find products with price less than the given value
+    List<Product> findByPriceLessThan(double price);
+    
+    // Find products matching name and category
+    List<Product> findByNameAndCategory(String name, String category);
+    
+    // Find products with price between two values, ordered by name
+    List<Product> findByPriceBetweenOrderByNameAsc(double min, double max);
+    
+    // Find a limited number of products for a specific category
+    List<Product> findTop10ByCategoryOrderByPriceDesc(String category);
+    
+    // Count products by category
+    long countByCategory(String category);
+    
+    // Check if a product exists by SKU
+    boolean existsBySku(String sku);
+}
+----
+
+== Supported Query Methods
+
+=== FindBy Operations
+
+* `findBy<Property>` - Finds entities where the property equals the given value
+* `findBy<Property>In` - Finds entities where the property is in the given collection
+* `findBy<Property>NotIn` - Finds entities where the property is not in the given collection
+* `findBy<Property>Like` - Text search for a pattern
+
+=== Comparison Operations
+
+* `findBy<Property>LessThan` - Numeric field less than value
+* `findBy<Property>LessThanEqual` - Numeric field less than or equal to value
+* `findBy<Property>GreaterThan` - Numeric field greater than value
+* `findBy<Property>GreaterThanEqual` - Numeric field greater than or equal to value
+* `findBy<Property>Between` - Numeric field between two values
+
+=== Logical Operations
+
+* `findBy<Property1>And<Property2>` - Both conditions must match
+* `findBy<Property1>Or<Property2>` - Either condition must match
+* `findBy<Property>Not` - Negates the condition
+
+=== Special Operations
+
+* `findBy<Property>Near` - Geospatial search for nearby points
+* `findBy<Property>Starting` - Text field starting with pattern
+* `findBy<Property>Ending` - Text field ending with pattern
+* `findBy<Property>Containing` - Text field containing pattern
+* `findBy<Property>IsNull` - Property is null
+* `findBy<Property>IsNotNull` - Property is not null
+
+=== Result Handling
+
+* `findDistinctBy<Property>` - Return distinct results
+* `findTop<N>By<Property>` - Limit results to the first N
+* `findFirst<N>By<Property>` - Same as Top
+* `findBy<Property>OrderBy<Property2>Asc` - Order results ascending
+* `findBy<Property>OrderBy<Property2>Desc` - Order results descending
+
+=== Non-Query Methods
+
+* `countBy<Property>` - Count entities that match
+* `existsBy<Property>` - Check if any entity matches
+* `deleteBy<Property>` - Delete entities that match
+
+== Working with Return Types
+
+Redis OM Spring repositories support various return types:
+
+[source,java]
+----
+@Repository
+public interface CustomerRepository extends RedisDocumentRepository<Customer, String> {
+    // Return a single entity or null
+    Customer findByEmail(String email);
+    
+    // Return an Optional
+    Optional<Customer> findByUsername(String username);
+    
+    // Return a collection
+    List<Customer> findByLastName(String lastName);
+    
+    // Return a page for pagination
+    Page<Customer> findByCountry(String country, Pageable pageable);
+    
+    // Return a slice for pagination
+    Slice<Customer> findByCity(String city, Pageable pageable);
+    
+    // Return a custom projection
+    CustomerSummary findBySsn(String ssn);
+}
+----
+
+== Projection Interfaces
+
+Projections allow you to retrieve only selected fields:
+
+[source,java]
+----
+public interface CustomerSummary {
+    String getId();
+    String getName();
+    String getEmail();
+}
+----
+
+== Best Practices
+
+* Use the appropriate query method for your needs
+* Leverage indexing for fields used in queries
+* Be aware of performance implications for complex queries
+* Use projections to limit the data retrieved
+* Consider using Entity Streams for complex filtering and aggregation
+
+== Next Steps
+
+* xref:query-annotation.adoc[Query Annotation]
+* xref:entity-streams.adoc[Entity Streams]
+* xref:qbe.adoc[Query By Example]

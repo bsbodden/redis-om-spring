@@ -1,0 +1,268 @@
+= Query By Example
+:page-toclevels: 3
+:page-pagination:
+
+== Introduction to Query by Example
+
+Query by Example (QBE) is a user-friendly querying technique that allows you to create dynamic queries without writing complex query syntax or using the underlying query language. It's particularly useful for creating dynamic queries at runtime based on user input.
+
+Redis OM Spring provides comprehensive support for Spring Data's Query by Example feature, making it easy to build dynamic search conditions for both document and hash entities.
+
+== How Query by Example Works
+
+QBE consists of three main parts:
+
+1. **Probe** - An instance of the entity class with populated fields to match against
+2. **Example Matcher** - Defines how matching should behave (exact vs containing, case sensitivity, etc.)
+3. **Example** - Combines the probe and matcher to create a complete query
+
+This approach offers a simple, intuitive way to create queries:
+
+[source,java]
+----
+// 1. Create a probe with the fields you want to match
+Product probe = new Product();
+probe.setCategory("electronics");
+probe.setInStock(true);
+
+// 2. Define a matcher with custom matching behavior
+ExampleMatcher matcher = ExampleMatcher.matching()
+    .withStringMatcher(StringMatcher.CONTAINING)
+    .withIgnoreCase();
+
+// 3. Create the example
+Example<Product> example = Example.of(probe, matcher);
+
+// 4. Execute the query using the repository
+List<Product> results = productRepository.findAll(example);
+----
+
+== Using QBE with Repositories
+
+Any repository that extends `QueryByExampleExecutor` can execute Example queries:
+
+[source,java]
+----
+public interface ProductRepository extends RedisDocumentRepository<Product, String>, 
+                                          QueryByExampleExecutor<Product> {
+}
+----
+
+Redis OM Spring's document and hash repositories already implement `QueryByExampleExecutor`, so you can immediately use QBE methods:
+
+[source,java]
+----
+// Find a single result
+Optional<Product> product = repository.findOne(example);
+
+// Find all matching results
+List<Product> products = repository.findAll(example);
+
+// Count matching results
+long count = repository.count(example);
+
+// Check if any matches exist
+boolean exists = repository.exists(example);
+----
+
+== Customizing the Matcher
+
+`ExampleMatcher` allows you to customize how field values are matched:
+
+=== String Matching Strategies
+
+[source,java]
+----
+// Default: exact matching
+ExampleMatcher exactMatcher = ExampleMatcher.matching();
+
+// Containing substring matching
+ExampleMatcher containingMatcher = ExampleMatcher.matching()
+    .withStringMatcher(StringMatcher.CONTAINING);
+
+// Prefix matching
+ExampleMatcher prefixMatcher = ExampleMatcher.matching()
+    .withStringMatcher(StringMatcher.STARTING);
+----
+
+=== Case Sensitivity
+
+[source,java]
+----
+// Case-insensitive matching
+ExampleMatcher caseInsensitiveMatcher = ExampleMatcher.matching()
+    .withIgnoreCase();
+----
+
+=== Logical Operations
+
+[source,java]
+----
+// Default: match ALL criteria (AND)
+ExampleMatcher allMatcher = ExampleMatcher.matchingAll();
+
+// Match ANY criteria (OR)
+ExampleMatcher anyMatcher = ExampleMatcher.matchingAny();
+----
+
+=== Ignoring Properties
+
+[source,java]
+----
+// Ignore specific properties
+ExampleMatcher ignoringMatcher = ExampleMatcher.matching()
+    .withIgnorePaths("dateCreated", "lastModified");
+
+// Include null values
+ExampleMatcher nullMatcher = ExampleMatcher.matching()
+    .withIncludeNullValues();
+----
+
+== Advanced Usage
+
+=== Using with Entity Streams
+
+You can combine Query by Example with Entity Streams for even more powerful queries:
+
+[source,java]
+----
+// Create example
+Example<Product> example = Example.of(probe, matcher);
+
+// Use with entity stream
+List<Product> results = entityStream.of(Product.class)
+    .filter(example)  // Apply the example as a filter
+    .sorted(Product$.PRICE.desc())  // Add sorting
+    .limit(10)  // Add pagination
+    .collect(Collectors.toList());
+----
+
+=== Text Search with QBE
+
+For fields annotated with `@Searchable`, you can use string matchers with QBE:
+
+[source,java]
+----
+Product probe = new Product();
+probe.setDescription("wireless");  // @Searchable field
+
+// Search for products with description containing "wireless"
+Example<Product> example = Example.of(probe, 
+    ExampleMatcher.matching()
+        .withStringMatcher(StringMatcher.CONTAINING)
+        .withIgnoreCase());
+
+List<Product> results = repository.findAll(example);
+----
+
+=== Numeric Range Search
+
+For numeric fields, you need to use exact matching:
+
+[source,java]
+----
+Product probe = new Product();
+probe.setPrice(19.99);  // @Indexed field
+
+Example<Product> example = Example.of(probe);
+
+List<Product> results = repository.findAll(example);  // Finds products with price exactly 19.99
+----
+
+If you need range searches, consider using repository methods or entity streams.
+
+== Redis OM Spring QBE Capabilities
+
+Redis OM Spring leverages the Redis Query Engine (formerly RediSearch) to implement QBE efficiently, translating QBE criteria into Redis queries. As of Redis 8, the Query Engine is a standard component of Redis.
+
+What's supported:
+
+* Indexed fields (`@Indexed`, `@TextIndexed`, `@TagIndexed`, `@NumericIndexed`, `@Searchable`, etc.)
+* String matchers (EXACT, CONTAINING, STARTING)
+* Case sensitivity control
+* Logical operations (AND/OR)
+* Null handling
+* Fluentable queries (sorting, pagination, etc.)
+
+Considerations:
+
+* Fields must be indexed to be included in QBE queries
+* For full-text search capability, use `@Searchable` annotation
+* When using QBE with EntityStream, you gain additional flexibility
+
+== Real-World Examples
+
+=== Example 1: Basic Exact Matching
+
+[source,java]
+----
+// Find electronics products by NVIDIA
+Product probe = new Product();
+probe.setCategory("electronics");
+probe.setBrand("NVIDIA");
+
+Example<Product> example = Example.of(probe);
+
+List<Product> results = repository.findAll(example);
+----
+
+=== Example 2: Text Search
+
+[source,java]
+----
+// Find products with "gaming" in their description
+Product probe = new Product();
+probe.setDescription("gaming");  // @Searchable field
+
+Example<Product> example = Example.of(probe, 
+    ExampleMatcher.matching()
+        .withStringMatcher(StringMatcher.CONTAINING)
+        .withIgnoreCase());
+
+List<Product> results = repository.findAll(example);
+----
+
+=== Example 3: OR Matching
+
+[source,java]
+----
+// Find products that are either electronics OR have "wireless" in the name
+Product probe = new Product();
+probe.setCategory("electronics");
+probe.setName("wireless");  // @Searchable field
+
+Example<Product> example = Example.of(probe, 
+    ExampleMatcher.matchingAny()  // OR semantics
+        .withStringMatcher(StringMatcher.CONTAINING)
+        .withIgnoreCase());
+
+List<Product> results = repository.findAll(example);
+----
+
+=== Example 4: Combining with Entity Streams
+
+[source,java]
+----
+// Find top 5 highest-priced products matching the example
+Example<Product> example = Example.of(probe, matcher);
+
+List<Product> results = entityStream.of(Product.class)
+    .filter(example)
+    .sorted(Product$.PRICE.desc())
+    .limit(5)
+    .collect(Collectors.toList());
+----
+
+== Best Practices
+
+1. **Index fields properly** - Ensure fields used in QBE are properly indexed
+2. **Understand matcher behavior** - Different string matchers affect query performance
+3. **Use QBE for dynamic queries** - QBE excels at runtime-constructed queries from user input
+4. **Combine with EntityStream** - For complex querying needs, combine QBE with entity streams
+5. **Consider alternatives** - For fixed queries, use repository methods or `@Query` annotation
+
+== Next Steps
+
+* xref:search.adoc[Search Capabilities]
+* xref:entity-streams.adoc[Entity Streams API]
+* xref:query-annotation.adoc[Query Annotation]

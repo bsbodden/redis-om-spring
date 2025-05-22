@@ -1,0 +1,464 @@
+= Quick Start Example
+:page-toclevels: 3
+:page-pagination:
+
+This quick start guide will show you how to create a simple application using Redis OM Spring.
+
+== Prerequisites
+
+Before you begin, make sure you have:
+
+* Java 17 or higher
+* Maven or Gradle
+* Docker (for running Redis Stack)
+
+== Setting Up Redis Stack
+
+Redis OM Spring leverages the Redis Query Engine and JSON capabilities, which are standard in Redis 8 and above. The quickest way to get started is with Docker:
+
+[source,bash]
+----
+docker run -p 6379:6379 -p 8001:8001 redis/redis-stack
+----
+
+This launches Redis Stack with Redis Query Engine (formerly RediSearch) and JSON modules, as well as RedisInsight GUI accessible at http://localhost:8001. As of Redis 8, these modules are standard components of Redis.
+
+Alternatively, use the provided Docker Compose file:
+
+[source,bash]
+----
+docker compose up -d
+----
+
+== Creating a Spring Boot Project
+
+You can create a new Spring Boot project using Spring Initializr (https://start.spring.io/) with the following settings:
+
+* Project: Maven
+* Language: Java
+* Spring Boot: 3.0.0 or newer
+* Dependencies: Spring Web, Spring Data Redis
+
+Then add the Redis OM Spring dependency to your `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+  <groupId>com.redis.om</groupId>
+  <artifactId>redis-om-spring</artifactId>
+  <version>${redis-om-version}</version>
+</dependency>
+----
+
+For Gradle, add to your `build.gradle`:
+
+[source,groovy]
+----
+dependencies {
+  implementation "com.redis.om:redis-om-spring:${redisOmVersion}"
+  annotationProcessor "com.redis.om:redis-om-spring:${redisOmVersion}"
+}
+----
+
+== Configuring Redis Connection
+
+Add Redis connection details to `application.properties`:
+
+[source,properties]
+----
+# Redis connection settings
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+----
+
+Or in `application.yml`:
+
+[source,yaml]
+----
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+----
+
+== Creating a Domain Model
+
+Let's create a simple `Product` model:
+
+[source,java]
+----
+package com.example.demo.model;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.geo.Point;
+
+import com.redis.om.spring.annotations.Document;
+import com.redis.om.spring.annotations.Indexed;
+import com.redis.om.spring.annotations.Searchable;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @Searchable
+    private String name;
+    
+    @Searchable
+    private String description;
+    
+    @Indexed
+    private double price;
+    
+    @Indexed
+    private Set<String> categories = new HashSet<>();
+    
+    @Indexed
+    private Point location;
+    
+    // Constructors
+    public Product() {}
+    
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+    
+    public Set<String> getCategories() { return categories; }
+    public void setCategories(Set<String> categories) { this.categories = categories; }
+    
+    public Point getLocation() { return location; }
+    public void setLocation(Point location) { this.location = location; }
+}
+----
+
+== Creating a Repository
+
+Create a repository interface that extends `RedisDocumentRepository`:
+
+[source,java]
+----
+package com.example.demo.repository;
+
+import com.example.demo.model.Product;
+import com.redis.om.spring.repository.RedisDocumentRepository;
+
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Point;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ProductRepository extends RedisDocumentRepository<Product, String> {
+    // Find by exact name
+    List<Product> findByName(String name);
+    
+    // Find by name containing text
+    List<Product> findByNameContaining(String text);
+    
+    // Find by price range
+    List<Product> findByPriceBetween(double minPrice, double maxPrice);
+    
+    // Find by category
+    List<Product> findByCategoriesContaining(String category);
+    
+    // Find by location
+    List<Product> findByLocationNear(Point location, Distance distance);
+}
+----
+
+== Enabling Redis OM Spring
+
+Add the `@EnableRedisDocumentRepositories` annotation to your main application class:
+
+[source,java]
+----
+package com.example.demo;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import com.redis.om.spring.annotations.EnableRedisDocumentRepositories;
+
+@SpringBootApplication
+@EnableRedisDocumentRepositories(basePackages = "com.example.demo.model")
+public class DemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+}
+----
+
+== Creating a Service
+
+Create a service to handle product operations:
+
+[source,java]
+----
+package com.example.demo.service;
+
+import com.example.demo.model.Product;
+import com.example.demo.repository.ProductRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ProductService {
+    @Autowired
+    private ProductRepository repository;
+    
+    public Product save(Product product) {
+        return repository.save(product);
+    }
+    
+    public List<Product> findAll() {
+        return (List<Product>) repository.findAll();
+    }
+    
+    public Product findById(String id) {
+        return repository.findById(id).orElse(null);
+    }
+    
+    public List<Product> findByNameContaining(String text) {
+        return repository.findByNameContaining(text);
+    }
+    
+    public List<Product> findByPriceRange(double min, double max) {
+        return repository.findByPriceBetween(min, max);
+    }
+    
+    public List<Product> findByCategory(String category) {
+        return repository.findByCategoriesContaining(category);
+    }
+    
+    public List<Product> findNearLocation(double latitude, double longitude, double radiusKm) {
+        Point location = new Point(longitude, latitude);
+        Distance distance = new Distance(radiusKm, Metrics.KILOMETERS);
+        return repository.findByLocationNear(location, distance);
+    }
+    
+    public void delete(String id) {
+        repository.deleteById(id);
+    }
+}
+----
+
+== Creating a REST Controller
+
+Create a REST controller to expose the product operations:
+
+[source,java]
+----
+package com.example.demo.controller;
+
+import com.example.demo.model.Product;
+import com.example.demo.service.ProductService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+    @Autowired
+    private ProductService service;
+    
+    @GetMapping
+    public List<Product> getAllProducts() {
+        return service.findAll();
+    }
+    
+    @GetMapping("/{id}")
+    public Product getProductById(@PathVariable String id) {
+        return service.findById(id);
+    }
+    
+    @PostMapping
+    public Product createProduct(@RequestBody Product product) {
+        return service.save(product);
+    }
+    
+    @GetMapping("/search")
+    public List<Product> searchProducts(@RequestParam String text) {
+        return service.findByNameContaining(text);
+    }
+    
+    @GetMapping("/price")
+    public List<Product> findByPriceRange(
+            @RequestParam double min,
+            @RequestParam double max) {
+        return service.findByPriceRange(min, max);
+    }
+    
+    @GetMapping("/category/{category}")
+    public List<Product> findByCategory(@PathVariable String category) {
+        return service.findByCategory(category);
+    }
+    
+    @GetMapping("/near")
+    public List<Product> findNearLocation(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam double radiusKm) {
+        return service.findNearLocation(lat, lon, radiusKm);
+    }
+    
+    @DeleteMapping("/{id}")
+    public void deleteProduct(@PathVariable String id) {
+        service.delete(id);
+    }
+}
+----
+
+== Adding Sample Data
+
+Create a data loader component to add sample data:
+
+[source,java]
+----
+package com.example.demo.config;
+
+import com.example.demo.model.Product;
+import com.example.demo.repository.ProductRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.geo.Point;
+
+import java.util.Set;
+
+@Configuration
+public class DataLoader {
+    @Autowired
+    private ProductRepository repository;
+    
+    @Bean
+    CommandLineRunner loadData() {
+        return args -> {
+            // Clear existing data
+            repository.deleteAll();
+            
+            // Create and save products
+            Product laptop = new Product();
+            laptop.setName("MacBook Pro");
+            laptop.setDescription("Apple MacBook Pro with M2 chip");
+            laptop.setPrice(1999.99);
+            laptop.setCategories(Set.of("electronics", "computers", "apple"));
+            laptop.setLocation(new Point(-122.066540, 37.377690));
+            repository.save(laptop);
+            
+            Product phone = new Product();
+            phone.setName("iPhone 15");
+            phone.setDescription("Apple iPhone 15 with A16 chip");
+            phone.setPrice(999.99);
+            phone.setCategories(Set.of("electronics", "phones", "apple"));
+            phone.setLocation(new Point(-122.066540, 37.377690));
+            repository.save(phone);
+            
+            Product headphones = new Product();
+            headphones.setName("Sony WH-1000XM5");
+            headphones.setDescription("Wireless noise cancelling headphones");
+            headphones.setPrice(349.99);
+            headphones.setCategories(Set.of("electronics", "audio", "sony"));
+            headphones.setLocation(new Point(-122.331516, 47.623089));
+            repository.save(headphones);
+            
+            System.out.println("Sample data loaded successfully!");
+        };
+    }
+}
+----
+
+== Running the Application
+
+Run your Spring Boot application:
+
+[source,bash]
+----
+./mvnw spring-boot:run
+----
+
+## Testing the REST API
+
+You can now test the REST API using curl or any API client:
+
+=== Get All Products
+[source,bash]
+----
+curl http://localhost:8080/api/products
+----
+
+=== Search Products
+[source,bash]
+----
+curl "http://localhost:8080/api/products/search?text=Apple"
+----
+
+=== Find by Price Range
+[source,bash]
+----
+curl "http://localhost:8080/api/products/price?min=500&max=1500"
+----
+
+=== Find by Category
+[source,bash]
+----
+curl http://localhost:8080/api/products/category/electronics
+----
+
+=== Find Near Location
+[source,bash]
+----
+curl "http://localhost:8080/api/products/near?lat=37.377690&lon=-122.066540&radiusKm=10"
+----
+
+== Using EntityStream API
+
+For more complex queries, you can use the EntityStream API. Add a new method to your service:
+
+[source,java]
+----
+@Autowired
+private EntityStream entityStream;
+
+public List<Product> findExpensiveElectronics(double minPrice) {
+    return entityStream
+        .of(Product.class)
+        .filter(Product$.CATEGORIES.in("electronics"))
+        .filter(Product$.PRICE.gt(minPrice))
+        .sorted(Product$.PRICE.desc())
+        .collect(Collectors.toList());
+}
+----
+
+== Next Steps
+
+This quick start guide demonstrated the basics of Redis OM Spring. To learn more, explore:
+
+* xref:entity-streams.adoc[Entity Streams] for more advanced querying
+* xref:search.adoc[Search capabilities] for full-text search
+* xref:vector-search.adoc[Vector Search] for AI-powered similarity search
+* Check out the full demo applications in the `/demos` directory of the Redis OM Spring repository

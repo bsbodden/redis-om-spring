@@ -1,0 +1,90 @@
+= Overview
+:page-toclevels: 3
+:page-pagination:
+
+Redis OM Spring extends the versatile Spring Data Redis framework (SDR), part of the larger Spring Data family, to provide a comprehensive object-mapping and repository solution for Redis Stack. While SDR provides easy configuration and access to Redis with both low-level and high-level abstractions, Redis OM Spring takes full advantage of the advanced capabilities available in Redis Stack, Enterprise Redis, and Redis Cloud.
+
+== What is Redis OM Spring?
+
+Redis OM Spring is an Object Mapping framework designed specifically for Redis, allowing Java developers to work with Redis data using familiar Spring concepts and annotations. Built on top of Spring Data Redis, it extends and enhances the existing capabilities to provide a more comprehensive experience when working with Redis Stack features.
+
+[source,text]
+----
+Redis Data Redis ⊂ Redis OM Spring
+----
+
+== Key Features
+
+Redis OM Spring offers the following key capabilities:
+
+=== Document Mapping
+
+* `@Document` annotation to map Spring Data models to Redis JSON documents
+* Comprehensive Redis JSON support with nested objects, collections, and references
+* Full control over JSON structure and storage
+
+=== Enhanced Redis Hash Support
+
+* Enhanced SDR's `@RedisHash` via `@EnableRedisEnhancedRepositories`
+* Native Redis Query Engine integration for secondary indexing
+* Uses [ULID](https://github.com/ulid/spec) for `@Id` annotated fields
+
+=== Powerful Repository Abstractions
+
+* `RedisDocumentRepository` with automatic implementation of complex repository interfaces
+* Type-safe querying with method naming conventions
+* Query derivation from method names
+* Custom query support using `@Query` and `@Aggregation` annotations
+
+=== Advanced Search Capabilities
+
+* Declarative Search Indices via `@Indexed`
+* Full-text Search Indices via `@Searchable`
+* Geospatial search with `@GeoIndexed`
+* Vector similarity search with `@VectorIndexed`
+* Numeric range querying with `@NumericIndexed`
+
+=== Fluent Query APIs
+
+* `EntityStream`: Java 8 streams-inspired query API
+* Type-safe query construction with generated metamodels
+* Fluent filtering, sorting, and projection
+
+=== Aggregation Support
+
+* Native Redis aggregation framework integration
+* Grouping, reducing, and analyzing data
+* Powerful data transformation capabilities
+
+=== Probabilistic Data Structures
+
+* `@Bloom` and `@Cuckoo` annotations for probabilistic set membership checks
+* Support for TopK and TDigest probabilistic algorithms
+
+=== AI and Vector Search Integration
+
+* `@Vectorize` annotation to generate embeddings for text and images
+* Integration with Spring AI for embedding generation
+* Azure OpenAI integration with Entra ID authentication
+* Vector Similarity Search capabilities
+
+=== Enterprise Features
+
+* Redis Sentinel support for high availability
+* Redis Enterprise integration
+* Redis Cloud deployment support
+
+== Technology Requirements
+
+Redis OM Spring has the following requirements:
+
+* Java 17 or higher
+* Spring Boot 3.0+
+* Redis Stack (or Redis with the appropriate modules installed)
+* Jedis client library
+
+== Getting Started
+
+Ready to get started with Redis OM Spring? Check out the xref:setup.adoc[Installation & Setup] guide to install the library and configure your project.
+
+TIP: For a quick introduction, try the xref:quickstart.adoc[Quick Start Example] that demonstrates the core features with runnable code samples.

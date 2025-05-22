@@ -1,0 +1,93 @@
+= Redis Data Models
+:page-toclevels: 3
+:experimental:
+:source-highlighter: highlight.js
+
+== Introduction to Redis Data Models
+
+This page provides an overview of the fundamental data models available in Redis and how Redis OM Spring maps Java objects to these data structures.
+
+== Redis Core Data Structures
+
+Redis provides various data structures that serve as the foundation for data modeling:
+
+* Strings - Simple key-value pairs
+* Lists - Ordered collections of strings
+* Sets - Unordered collections of unique strings
+* Sorted Sets - Sets ordered by a score
+* Hashes - Maps between string fields and string values
+* Streams - Append-only collections of map-like entries
+* HyperLogLog - Probabilistic data structure for counting unique elements
+* Geospatial indexes - Data structures for geospatial data
+
+== Redis OM Spring Data Models
+
+Redis OM Spring provides support for mapping Java objects to Redis data structures:
+
+=== Hash Mapping
+
+Redis Hashes are mapped to Java objects using the basic Spring Data Redis `@RedisHash` annotation or the enhanced Redis OM Spring capabilities.
+
+[source,java]
+----
+@RedisHash
+public class Product {
+    @Id
+    private String id;
+    private String name;
+    private double price;
+    // getters and setters
+}
+----
+
+=== JSON Document Mapping
+
+Redis JSON documents are mapped to Java objects using the Redis OM Spring `@Document` annotation.
+
+[source,java]
+----
+@Document
+public class Customer {
+    @Id
+    private String id;
+    private String name;
+    private Address address;
+    private List<Order> orders;
+    // getters and setters
+}
+----
+
+== Choosing the Right Data Model
+
+The choice between Redis Hashes and Redis JSON depends on your specific requirements:
+
+[cols="1,2,2"]
+|===
+|Feature |Redis Hashes |Redis JSON
+
+|Nested Objects
+|Limited support
+|Full support for complex nested structures
+
+|Query Capabilities
+|Basic field-level queries
+|Rich query capabilities including nested paths
+
+|Schema Evolution
+|Challenging
+|More flexible
+
+|Storage Efficiency
+|Very efficient
+|Less efficient for simple objects
+
+|Legacy Integration
+|Works with standard Spring Data Redis
+|Requires Redis Stack/Redis Enterprise
+|===
+
+== Next Steps
+
+* xref:hash-mappings.adoc[Learn more about Redis Hash mappings]
+* xref:json_mappings.adoc[Learn more about Redis JSON mappings]
+* xref:object-mapping.adoc[Understand object mapping principles]

@@ -1,0 +1,177 @@
+= Document Annotation
+:page-toclevels: 3
+:experimental:
+:source-highlighter: highlight.js
+
+== Introduction to the @Document Annotation
+
+The `@Document` annotation is a core component of Redis OM Spring that enables mapping Java objects to Redis JSON documents. This page explains how to use the annotation and its various configuration options.
+
+== Basic Usage
+
+=== Simple Document Mapping
+
+To map a Java class to a Redis JSON document, simply add the `@Document` annotation:
+
+[source,java]
+----
+import com.redis.om.spring.annotations.Document;
+import org.springframework.data.annotation.Id;
+
+@Document
+public class Customer {
+    @Id
+    private String id;
+    private String name;
+    private String email;
+    private Address address;
+    
+    // Getters and setters
+}
+----
+
+When an instance of this class is saved, it will be stored as a JSON document in Redis.
+
+== Configuration Options
+
+The `@Document` annotation provides several options to customize how entities are stored and indexed.
+
+=== Document Keyspace
+
+By default, Redis OM Spring uses the entity's simple class name as the keyspace. You can customize this using the `prefix` attribute:
+
+[source,java]
+----
+@Document(prefix = "cust")
+public class Customer {
+    // Fields
+}
+----
+
+This would store Customer entities with keys like `cust:1`, `cust:2`, etc.
+
+=== Index Name
+
+You can specify a custom name for the Redis Query Engine index that will be created:
+
+[source,java]
+----
+@Document(indexName = "customer_idx")
+public class Customer {
+    // Fields
+}
+----
+
+=== Time To Live (TTL)
+
+Configure expiration for documents:
+
+[source,java]
+----
+@Document(timeToLive = 3600) // TTL in seconds
+public class Session {
+    @Id
+    private String id;
+    private String userId;
+    private LocalDateTime lastAccess;
+    // Other fields
+}
+----
+
+=== Index Creation Configuration
+
+Control how and when indices are created:
+
+[source,java]
+----
+import com.redis.om.spring.annotations.Document;
+import com.redis.om.spring.annotations.IndexCreationMode;
+
+@Document(createIndex = true, indexCreationMode = IndexCreationMode.RECREATE_INDEXES)
+public class Product {
+    @Id
+    private String id;
+    private String name;
+    private double price;
+    private String description;
+    // Other fields
+}
+----
+
+Available modes include:
+* `RECREATE_INDEXES` - Drop and recreate the index
+* `CREATE_IF_NOT_EXIST` - Only create if the index doesn't exist
+* `NO_CREATE_NO_DROP` - Don't create or drop indices
+
+== Nested Objects and Collections
+
+=== Handling Complex Structures
+
+Redis JSON supports nested objects and collections, making it ideal for complex data models:
+
+[source,java]
+----
+@Document
+public class Order {
+    @Id
+    private String id;
+    private String orderNumber;
+    private Customer customer;            // Nested object
+    private List<OrderItem> items;        // Collection of objects
+    private Map<String, String> metadata; // Map
+    private LocalDateTime orderDate;
+    // Getters and setters
+}
+
+public class OrderItem {
+    private String productId;
+    private String productName;
+    private int quantity;
+    private double price;
+    // Getters and setters
+}
+----
+
+== Indexing with @Document
+
+The `@Document` annotation works in conjunction with indexing annotations to enable search capabilities:
+
+[source,java]
+----
+@Document
+public class Product {
+    @Id
+    private String id;
+    
+    @Indexed
+    private String sku;
+    
+    @TextIndexed
+    private String name;
+    
+    @TextIndexed(weight = 0.5)
+    private String description;
+    
+    @NumericIndexed
+    private double price;
+    
+    @TagIndexed
+    private List<String> categories;
+    
+    // Getters and setters
+}
+----
+
+== Best Practices
+
+* Use `@Document` for complex objects that benefit from JSON representation
+* Configure appropriate indices for fields that will be queried
+* Consider TTL for temporary entities
+* Use custom index names in production environments
+* Use consistent keyspace prefixes across your application
+
+== Next Steps
+
+* xref:json-repositories.adoc[Working with Document Repositories]
+* xref:search.adoc[Redis Query Engine Integration]
+* xref:index-annotations.adoc[Index Annotations]

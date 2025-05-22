@@ -1,0 +1,164 @@
+= EntityStreams Aggregations
+
+The EntityStreams API provides aggregations support through the Redis Query Engine (formerly RediSearch). Aggregations can be performed on entities by piping them through various aggregation stages. As of Redis 8, the Query Engine is a standard component of Redis.
+
+== Aggregation Stages
+
+=== Group By
+
+Group results by one or more properties:
+
+[source,java]
+----
+List<Pair<String, Long>> countsPerBrand = stream
+    .groupBy(Game$.BRAND) <1>
+    .reduce(COUNT) <2>
+    .toList(String.class, Long.class); <3>
+----
+<1> Group by the `brand` property
+<2> Apply a `COUNT` reducer
+<3> Output results as a list of pairs
+
+=== Filter
+
+Filter aggregated results:
+
+[source,java]
+----
+stream
+    .filter("@count < 5") <1>
+    .filter("@count > 2 && @brand != \"\"") <2>
+----
+<1> Filter groups where count is less than 5
+<2> And count is greater than 2 and brand is not empty
+
+=== Reduce
+
+Apply reduction aggregations like `SUM`, `AVG` etc.
+
+[source,java]
+----
+stream
+    .reduce(SUM, Game$.PRICE) <1>
+    .as("totalPrice") <2>
+----
+<1> Calculate sum of price
+<2> Alias as totalPrice
+
+=== Sort By
+
+Sort results by aggregated values:
+
+[source,java]
+----
+stream
+    .sorted(Order.desc("@totalPrice")) <1>
+----
+<1> Sort by totalPrice descending
+
+=== Limit
+
+Limit number of results:
+
+[source,java]
+----
+stream
+    .limit(10)
+----
+
+=== Apply
+
+Apply expressions to create derived values:
+
+[source,java]
+----
+stream
+    .apply("@sales * 0.8", "discountSales") <1>
+----
+<1> Calculate discounted sales
+
+The results can then be grouped, reduced, sorted etc.
+
+== Streaming Aggregation Results
+
+Aggregation results can be streamed and collected similar to regular search results:
+
+[source,java]
+----
+List<Pair<String, Long>> counts = stream
+    .groupBy(Game$.BRAND)
+    .reduce(COUNT)
+    .toList(String.class, Long.class); <1>
+----
+<1> Collect as list of pairs
+
+This provides an overview of aggregations with EntityStreams. Refer to the Javadocs and tests for more examples.
+
+
+== Cursor API
+
+The Redis OM Spring EntityStreams API provides support for the Redis Search cursor API to enable efficient paging of search results.
+
+== Usage
+
+To use the cursor API:
+
+. Create a `SearchStream`:
+
+[source,java]
+----
+SearchStream<MyEntity> stream = entityStream.of(MyEntity.class);
+----
+
+. Call `cursor()` on the stream to enable cursors and set the page size:
+
+[source,java]
+----
+stream.cursor(100); <1>
+----
+<1> Page size of 100 rows
+
+This will return a cursor ID that can be used to fetch subsequent pages.
+
+. Read pages using the cursor ID:
+
+[source,java]
+----
+long cursorId = ...; <1>
+
+while(cursorId != 0) {
+
+  Page<MyEntity> page = stream.nextPage(cursorId); <2>
+
+  // process results
+
+  cursorId = page.getCursorId(); <3>
+}
+----
+<1> Cursor ID from initial query
+<2> Fetch next page
+<3> Get cursor ID for next page
+
+The `nextPage()` method handles reading the next page using the cursor API under the hood.
+
+== Configuration
+
+You can control the page size and idle timeout:
+
+[source,java]
+----
+stream.cursor(100, Duration.ofSeconds(30)); <1>
+----
+<1> Page size 100, idle timeout 30 seconds
+
+Larger page sizes will reduce network round trips but consume more memory.
+Shorter timeouts will reclaim server resources faster.
+
+== Additional Details
+
+- The cursor ID is opaque - only pass it back into `nextPage()`.
+- Cursor state is stored server-side so is robust to client disconnects.
+- Cursors are garbage collected on the server after idle timeout.
+- Can manually delete a cursor using `deleteCursor(idx, cursorId)`.
+
+This covers the basics of the cursor API in Redis OM Spring! Let me know if any part needs more explanation.
