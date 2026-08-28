@@ -31,6 +31,12 @@ repositories {
 dependencies {
 	implementation project(':redis-om-spring')
 
+	// Reproduces https://github.com/redis/redis-om-spring/issues/769: Spring Data Redis
+	// 4.1+ defaults JedisConnectionFactory.useUnifiedJedis to true, which breaks
+	// RedisModulesClient#getJedis()'s raw Jedis extraction. Deliberately bumps this demo's
+	// own runtime, not just its tests, to reproduce the issue in a real running app.
+	implementation 'org.springframework.data:spring-data-redis:4.1.0'
+
 	// Important for RedisOM annotation processing!
 	annotationProcessor project(':redis-om-spring')
 	testAnnotationProcessor project(':redis-om-spring')
